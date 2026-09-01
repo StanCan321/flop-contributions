@@ -6,8 +6,10 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
-- enabled Dependabot alerts and security-update pull requests; and
-- added weekly, review-required GitHub Actions dependency updates.
+- enabled Dependabot alerts and security-update pull requests;
+- added weekly, review-required GitHub Actions dependency updates;
+- added a safety-focused pull-request template covering validation, external
+  activity, private data, and unattended-operation boundaries.
 
 ## 0.2.1 — 2026-09-01
 
