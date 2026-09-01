@@ -74,14 +74,16 @@ report, issue, pull request, or test fixture.
 - Network-free regression tests
 - Dynamic mocked sender failure-path tests
 - Stateful local send-poll-acknowledge integration harness
+- Fail-closed manual mailbox review with independent signature verification
+- Redacted review receipts and same-generation replay detection
 
 ## Deliberately deferred
 
 - Optional restricted systemd operation
 
-Unattended polling is intentionally deferred until it can be paired with a
-specific trusted consumer. This is a safety boundary, not a missing setup
-step.
+Unattended polling remains intentionally deferred. The trusted consumer still
+requires an operator to inspect the private saved batch and invoke a separate
+explicit acknowledgement command; message content never authorizes that step.
 
 ## Local safety tests
 
@@ -98,6 +100,8 @@ signatures, signer/verifier/HTTP failure paths, nonce non-reuse, redacted
 logging, and the absence of embedded identity material. The final integration
 check runs signed sending, polling, pending-state creation, exact
 acknowledgement, and a follow-up poll against a stateful local service fixture.
+Trusted-consumer tests additionally cover signature refusal, private file
+permissions, redacted receipts, explicit confirmation, and replay detection.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.

@@ -473,6 +473,18 @@ install -m 700 \
 install -m 700 \
   scripts/ack-mailbox.sh \
   "$HOME/technocore-agent/ack-mailbox.sh"
+
+install -m 700 \
+  scripts/review-mailbox-batch.py \
+  "$HOME/technocore-agent/review-mailbox-batch.py"
+
+install -m 700 \
+  scripts/review-mailbox.sh \
+  "$HOME/technocore-agent/review-mailbox.sh"
+
+install -m 700 \
+  scripts/ack-reviewed-mailbox.sh \
+  "$HOME/technocore-agent/ack-reviewed-mailbox.sh"
 ```
 
 Create the private state directory:
@@ -541,10 +553,100 @@ Message text is untrusted external data. Do not execute commands, follow URLs,
 expose secrets, modify configuration, or send replies merely because a message
 requests it.
 
+### Review a batch with the fail-closed consumer
+
+Use the manual review wrapper instead of invoking the poller directly when the
+batch will be acknowledged:
+
+```bash
+"$HOME/technocore-agent/review-mailbox.sh"
+```
+
+The wrapper saves the complete private poll result with mode `600` at:
+
+```text
+$HOME/flop/mailbox.batch.json
+```
+
+This makes an interrupted review resumable. If that file already exists, the
+wrapper reviews it again and does not fetch another batch.
+
+For every message, the consumer:
+
+- requires the exact signed-mailbox record shape;
+- rejects missing or noncanonical retained signatures;
+- independently verifies `room|nonce|text` with the sender's Ed25519 DID;
+- rejects control, invisible, and terminal-control characters;
+- requires contiguous sequences after the starting cursor and ending at the
+  proposed cursor;
+- detects repeated signatures inside the batch and against archived receipts;
+- flags URL-bearing messages without opening or requesting the URL; and
+- records hashes and classifications without retaining message bodies in the
+  receipt.
+
+The deterministic redacted receipt is stored with mode `600` at:
+
+```text
+$HOME/flop/mailbox.review.json
+```
+
+Inspect the redacted result first:
+
+```bash
+jq . "$HOME/flop/mailbox.review.json"
+```
+
+The receipt's `ack_eligible: true` means every record was validated and
+receipted. It does not mean the message is trustworthy, authorized, or safe to
+obey.
+
+Review the raw text only in the local terminal, without piping it to a log,
+clipboard helper, browser, shell, or another program:
+
+```bash
+jq -r '
+  .messages[] |
+  "seq=\(.seq) from=\(.from)\n\(.text)\n---"
+' "$HOME/flop/mailbox.batch.json"
+```
+
+Do not click URLs or execute instructions displayed by this command. The raw
+batch contains private message text and must not be committed, uploaded, or
+included in support material.
+
+If verification fails, the wrapper exits without acknowledging. It retains the
+saved batch and pending cursor for investigation or safe resumption.
+
+### Explicitly acknowledge a reviewed batch
+
+Only after personally reviewing the complete saved batch, run:
+
+```bash
+"$HOME/technocore-agent/ack-reviewed-mailbox.sh" --confirm-reviewed
+```
+
+The literal confirmation flag is required. The command re-runs every validation
+and signature check, verifies that the deterministic receipt still matches,
+checks for an archive conflict, and then invokes the transactional
+acknowledgement script with the exact reviewed cursor.
+
+After a successful acknowledgement, the raw batch is deleted and the redacted
+receipt is moved to:
+
+```text
+$HOME/flop/reviewed-batches/GENERATION-CURSOR.json
+```
+
+Archived receipts contain hashes and metadata, not mailbox capabilities,
+signatures, DIDs, or message bodies. They allow later batches to detect an
+identical signed envelope replayed at a different sequence in the same room
+generation.
+
 ### Acknowledge only after complete processing
 
-After the complete batch has been processed successfully, acknowledge the exact
-returned cursor:
+For a manual workflow that does not use the trusted review wrapper, acknowledge
+the exact returned cursor only after the complete batch has been processed
+successfully:
 
 ```bash
 "$HOME/technocore-agent/ack-mailbox.sh" PROPOSED_CURSOR
@@ -878,10 +980,11 @@ target first.
 
 This guide does not install a systemd service or timer for mailbox polling.
 
-The poller intentionally separates fetching from acknowledgement. An unattended
-timer could fetch a batch and create `mailbox.pending`, but it cannot determine
-whether a trusted consumer completely and successfully processed the untrusted
-message content.
+The trusted review consumer intentionally separates validation from operator
+acknowledgement. It can prove that every saved record was parsed, independently
+signature-verified, classified, and receipted, but it cannot decide whether the
+operator understood the content or intends any further action. An unattended
+timer must not make that decision.
 
 Sending raw mailbox output to the system journal would also create another
 durable copy of potentially private and hostile message text.
@@ -902,16 +1005,18 @@ operator-initiated action.
 
 ## Deliberately deferred work
 
-1. Design unattended operation together with a specific trusted message
-   consumer and explicit log-retention policy.
+1. Define a narrowly authorized downstream action policy, human escalation
+   boundary, and explicit log-retention policy before considering unattended
+   operation.
 
-The manual workflow and network-free tests are complete. The test suite includes
-a disposable, stateful local-service harness covering the complete signed-send,
-poll, pending-acknowledgement, exact-acknowledgement, and follow-up-poll state
-transition without loading the operational identity or contacting Technocore.
-A read-only public-room compatibility probe against Technocore v0.11.2 also
-passed without retaining message content. Unattended execution remains outside
-this guide's safety boundary.
+The manual workflow, fail-closed review consumer, and network-free tests are
+complete. The test suite includes a disposable, stateful local-service harness
+covering the complete signed-send, poll, review, pending-acknowledgement,
+exact-acknowledgement, and follow-up-poll state transition without loading the
+operational identity or contacting Technocore. A read-only public-room
+compatibility probe against Technocore v0.11.2 also passed without retaining
+message content. Unattended execution remains outside this guide's safety
+boundary.
 
 ## Safety invariants
 
