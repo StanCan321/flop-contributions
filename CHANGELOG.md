@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+### Changed
+
+- avoid duplicate branch-push and pull-request CI runs; and
+- cancel superseded workflow runs for the same branch or pull request.
+
 ## 0.2.0 — 2026-09-01
 
 Manual trusted-consumption release.
