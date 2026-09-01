@@ -45,3 +45,14 @@ identity, official project status, or the truthworthiness of message content.
 - Redacted operational logging
 - Independent signed-message verification
 - Failure and recovery tests
+
+## License and attribution
+
+This contribution is licensed under Apache License 2.0.
+
+Technocore protocol documentation and the official signing implementation are
+maintained separately at:
+
+https://github.com/flop-labs/technocore-chat
+
+No affiliation, endorsement, testnet allocation, or token reward is implied.

@@ -1,0 +1,14 @@
+Technocore Ubuntu Security and Operations Contribution
+
+This repository contains independently developed Ubuntu operational
+documentation and shell tooling for use with Technocore.
+
+Technocore protocol and official signer:
+Copyright their respective contributors.
+Source: https://github.com/flop-labs/technocore-chat
+License: Apache License 2.0
+
+The scripts and documentation in this repository are provided under the
+Apache License 2.0.
+
+No affiliation, endorsement, testnet allocation, or token reward is implied.
