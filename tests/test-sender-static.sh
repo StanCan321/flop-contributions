@@ -75,4 +75,15 @@ fi
 
 pass "no embedded identity material"
 
+grep -Fq 'VERIFIER="$HOME/technocore-agent/verify-envelope.py"' "$SENDER" ||
+    fail "local envelope verifier path is missing"
+
+grep -Fq 'uv run "$VERIFIER"' "$SENDER" ||
+    fail "sender does not invoke the local verifier"
+
+grep -Fq "local signature verification failed" "$SENDER" ||
+    fail "sender does not fail closed after verification failure"
+
+pass "local signature verification required"
+
 echo "All static sender checks passed."

@@ -17,6 +17,13 @@ umask 077
 
 source "$HOME/.technocore-env"
 
+VERIFIER="$HOME/technocore-agent/verify-envelope.py"
+
+if [ ! -x "$VERIFIER" ]; then
+    echo "ERROR: envelope verifier is missing or not executable: $VERIFIER" >&2
+    exit 1
+fi
+
 LOG_DIR="$HOME/flop"
 LOG_FILE="$LOG_DIR/activity.jsonl"
 
@@ -117,19 +124,34 @@ mapfile -t OUT < <(
 DID="${OUT[0]}"
 SIG="${OUT[1]}"
 
-REQUEST_JSON="$(
+ENVELOPE_JSON="$(
     jq -cn \
+        --arg room "$ROOM" \
         --arg did "$DID" \
         --arg sig "$SIG" \
         --arg nonce "$NONCE" \
         --arg text "$TEXT" \
         '{
+            room: $room,
             did: $did,
             sig: $sig,
             nonce: $nonce,
             text: $text
         }'
 )"
+
+if ! printf '%s' "$ENVELOPE_JSON" |
+     uv run "$VERIFIER" >/dev/null; then
+    echo "ERROR: local signature verification failed; message not sent" >&2
+    exit 1
+fi
+
+REQUEST_JSON="$(
+    printf '%s' "$ENVELOPE_JSON" |
+    jq -c 'del(.room)'
+)"
+
+unset ENVELOPE_JSON
 
 TMP_RESPONSE="$(mktemp)"
 trap 'rm -f "$TMP_RESPONSE"' EXIT
