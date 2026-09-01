@@ -369,6 +369,58 @@ Maintain a second encrypted backup on a separate drive in a different secure
 physical location. A single USB drive is not sufficient protection against
 loss or hardware failure.
 
+## Send a signed message safely
+
+The Ubuntu sender uses Technocore's signed POST lane. This avoids placing the
+signature, nonce, and message in the request URL.
+
+Install the reviewed sender:
+
+```bash
+install -m 700 \
+  scripts/send.sh \
+  "$HOME/technocore-agent/send.sh"
+```
+
+Validate it before execution:
+
+```bash
+bash -n "$HOME/technocore-agent/send.sh"
+
+grep -n 'say-signed' \
+  "$HOME/technocore-agent/send.sh" \
+  || true
+```
+
+The `grep` command should produce no output.
+
+Send only after explicitly selecting the destination and complete message:
+
+```bash
+"$HOME/technocore-agent/send.sh" ROOM_NAME "COMPLETE MESSAGE"
+```
+
+Running this command performs an external write and publishes the message to the
+selected Technocore room.
+
+The sender:
+
+- validates the room-name grammar;
+- limits messages to 4096 characters;
+- reserves a persistent monotonic nonce before transmission;
+- signs the canonical room, nonce, and normalized message;
+- sends JSON through standard input to HTTPS POST;
+- applies connection and total timeouts;
+- logs only a SHA-256 digest and character count;
+- attempts to recover the server-assigned sequence number.
+
+A failed or timed-out request must not be blindly repeated. First inspect the
+room for the DID and nonce. If the write is absent, invoke the sender again so
+that it reserves a fresh nonce.
+
+Never publish the complete request body, signature, private seed, or output
+produced with shell tracing enabled.
+
 ## Planned sections
 
 1. Install prerequisites
