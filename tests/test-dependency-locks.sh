@@ -22,7 +22,7 @@ from pathlib import Path
 
 root = Path(sys.argv[1])
 expected = {
-    "uv.txt": {"uv": "0.12.5"},
+    "uv.txt": {"uv": "0.12.7"},
     "verifier.txt": {
         "cffi": "2.1.1",
         "cryptography": "50.0.1",
