@@ -55,6 +55,9 @@ Report vulnerabilities using the private process in
 [`SECURITY.md`](SECURITY.md). Never place a real secret or private message in a
 report, issue, pull request, or test fixture.
 
+For the required branch, validation, and pull-request workflow, see
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
+
 ## Current capabilities
 
 - Secure Ubuntu agent-operations tutorial

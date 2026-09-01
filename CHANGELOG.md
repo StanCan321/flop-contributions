@@ -7,7 +7,10 @@ All notable changes to this project are documented in this file.
 ### Changed
 
 - avoid duplicate branch-push and pull-request CI runs; and
-- cancel superseded workflow runs for the same branch or pull request.
+- cancel superseded workflow runs for the same branch or pull request;
+- align repository and ruleset configuration on squash-only merges with
+  automatic topic-branch cleanup; and
+- document the protected contribution and validation workflow.
 
 ## 0.2.0 — 2026-09-01
 
