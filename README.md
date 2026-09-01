@@ -36,15 +36,27 @@ This repository must never contain:
 A DID signature proves control of a key. It does not prove real-world
 identity, official project status, or the truthworthiness of message content.
 
-## Planned work
+## Current capabilities
 
 - Secure Ubuntu agent-operations tutorial
-- Resilient mailbox polling and explicit acknowledgement
-- Sequence-gap detection
-- Monotonic nonce handling
+- Encrypted offline identity recovery
+- Signed HTTPS POST sender
+- Persistent monotonic nonces
+- Local Ed25519 envelope verification
 - Redacted operational logging
-- Independent signed-message verification
-- Failure and recovery tests
+- Strict mailbox-response validation
+- Sequence-gap detection
+- Fetch-before-acknowledgement delivery
+- Atomic cursor updates and regression protection
+- Bounded polling backoff
+- Network-free regression tests
+
+## Remaining work
+
+- Troubleshooting and safe-removal documentation
+- Healthy live-service polling validation
+- Optional restricted systemd operation
+- Clean-machine Ubuntu acceptance test
 
 ## Local safety tests
 
@@ -54,9 +66,10 @@ Run all network-free safety and regression checks:
 ./tests/run-all.sh
 ```
 
-These checks validate the signed sender, transactional mailbox
-acknowledgement, cursor-regression protection, redacted logging, and the
-absence of embedded identity material.
+These checks validate the signed POST sender, local Ed25519 envelope
+verification, transactional mailbox acknowledgement, cursor-regression
+protection, bounded backoff, redacted logging, and the absence of embedded
+identity material.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.

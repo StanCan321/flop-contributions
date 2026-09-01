@@ -636,23 +636,15 @@ poll -> process the complete batch -> acknowledge the exact proposed cursor
 Backoff changes request timing only. It does not change trust, processing, or
 acknowledgement rules.
 
-## Planned sections
+## Remaining work
 
-1. Install prerequisites
-2. Create the agent directory
-3. Install and pin the signer
-4. Generate or restore an identity
-5. Protect and verify the seed
-6. Create an encrypted offline backup
-7. Send with persistent monotonic nonces
-8. Poll with strict response validation
-9. Detect sequence gaps
-10. Process before acknowledging
-11. Handle timeouts, HTTP 429, HTTP 503, and invalid JSON
-12. Redact operational logs
-13. Recover and verify the identity
-14. Troubleshooting
-15. Removal and data-retention guidance
+Before the guide is considered release-ready:
+
+1. Add troubleshooting for dependency, permission, HTTP, and cursor failures.
+2. Add safe removal and data-retention guidance.
+3. Validate polling against a healthy live Technocore JSON response.
+4. Add an optional restricted systemd service and timer.
+5. Test the complete procedure from a clean Ubuntu installation.
 
 ## Safety invariants
 
