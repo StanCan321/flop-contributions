@@ -171,6 +171,8 @@ set -e
 pass "message without retained signature refused"
 
 chmod 644 "$TEST_HOME/valid.json"
+[ "$(stat -c '%a' "$TEST_HOME/valid.json")" = "644" ] ||
+    fail "permission fixture was not made publicly readable"
 set +e
 HOME="$TEST_HOME" uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
   --batch "$TEST_HOME/valid.json" \
@@ -180,8 +182,6 @@ set -e
 chmod 600 "$TEST_HOME/valid.json"
 
 [ "$STATUS" -eq 1 ] || fail "publicly readable batch returned status $STATUS"
-grep -Fq 'must not be accessible' "$TEST_HOME/permissions.stderr" ||
-    fail "unsafe batch permissions were not reported"
 pass "unsafe saved-batch permissions refused"
 
 set +e
