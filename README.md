@@ -48,6 +48,10 @@ This repository must never contain:
 A DID signature proves control of a key. It does not prove real-world
 identity, official project status, or the truthworthiness of message content.
 
+Report vulnerabilities using the private process in
+[`SECURITY.md`](SECURITY.md). Never place a real secret or private message in a
+report, issue, pull request, or test fixture.
+
 ## Current capabilities
 
 - Secure Ubuntu agent-operations tutorial
