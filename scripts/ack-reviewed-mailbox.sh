@@ -9,6 +9,7 @@ RECEIPT_FILE="$STATE_DIR/mailbox.review.json"
 HISTORY_DIR="$STATE_DIR/reviewed-batches"
 REVIEWER="$AGENT_DIR/review-mailbox-batch.py"
 ACK_SCRIPT="$AGENT_DIR/ack-mailbox.sh"
+DEPENDENCY_LOCK="$AGENT_DIR/requirements-verifier.txt"
 
 if [ -L "$STATE_DIR" ]; then
     echo "ERROR: private state directory must not be a symlink" >&2
@@ -26,6 +27,11 @@ if [ ! -x "$REVIEWER" ] || [ ! -x "$ACK_SCRIPT" ]; then
     exit 1
 fi
 
+if [ ! -f "$DEPENDENCY_LOCK" ] || [ -L "$DEPENDENCY_LOCK" ]; then
+    echo "ERROR: verified dependency lock is missing or unsafe" >&2
+    exit 1
+fi
+
 if [ ! -f "$BATCH_FILE" ] || [ ! -f "$RECEIPT_FILE" ] \
    || [ -L "$BATCH_FILE" ] || [ -L "$RECEIPT_FILE" ]; then
     echo "ERROR: a regular saved batch and matching receipt are required" >&2
@@ -34,9 +40,9 @@ fi
 
 # Re-run the fail-closed review. An existing receipt is accepted only if its
 # exact deterministic bytes still match the saved batch.
-uv run \
+UV_OFFLINE=1 uv run \
   --python 3.12 \
-  --with 'cryptography==50.0.1' \
+  --with-requirements "$DEPENDENCY_LOCK" \
   "$REVIEWER" \
   --batch "$BATCH_FILE" \
   --receipt "$RECEIPT_FILE" \

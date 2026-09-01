@@ -112,7 +112,7 @@ Place the reviewed Technocore `sign.py` in that directory and restrict it to
 the current user:
 
 ```bash
-chmod 600 "$HOME/technocore-agent/sign.py"
+chmod 700 "$HOME/technocore-agent/sign.py"
 ```
 
 The signing dependency must be pinned in the script's PEP 723 metadata:
@@ -129,6 +129,24 @@ Verify the metadata before executing the signer:
 ```bash
 sed -n '1,5p' "$HOME/technocore-agent/sign.py"
 ```
+
+## Prepare hash-locked Python dependencies
+
+The reviewed repository records every accepted SHA-256 distribution hash for
+`cryptography` and its complete transitive dependency closure. Prepare the uv
+cache from that lock before any identity or message operation:
+
+```bash
+cd "$HOME/flop-contributions"
+./scripts/prepare-locked-dependencies.sh
+```
+
+This command installs `requirements/verifier.txt` into the private agent
+directory with mode `600`, performs a strict `--require-hashes` installation in
+a disposable environment, verifies the exact installed versions, and proves
+that the prepared cache works offline. Operational scripts subsequently set
+`UV_OFFLINE=1`; a missing cache entry therefore stops the operation instead of
+downloading an unchecked artifact.
 
 ## Generate a private agent identity
 
@@ -188,7 +206,9 @@ Derive the public identity in a subshell:
     source "$HOME/.technocore-env"
     export SIGN_SEED
 
-    uv run --python 3.12 \
+    UV_OFFLINE=1 uv run --python 3.12 \
+      --with-requirements \
+      "$HOME/technocore-agent/requirements-verifier.txt" \
       "$HOME/technocore-agent/sign.py" did
 )
 ```
@@ -335,7 +355,9 @@ chmod 600 "$RECOVERY_DIR/.technocore-env"
     source "$RECOVERY_DIR/.technocore-env"
     export SIGN_SEED
 
-    uv run --python 3.12 \
+    UV_OFFLINE=1 uv run --python 3.12 \
+      --with-requirements \
+      "$RECOVERY_DIR/technocore-agent/requirements-verifier.txt" \
       "$RECOVERY_DIR/technocore-agent/sign.py" did
 )
 ```

@@ -18,9 +18,15 @@ umask 077
 source "$HOME/.technocore-env"
 
 VERIFIER="$HOME/technocore-agent/verify-envelope.py"
+DEPENDENCY_LOCK="$HOME/technocore-agent/requirements-verifier.txt"
 
 if [ ! -x "$VERIFIER" ]; then
     echo "ERROR: envelope verifier is missing or not executable: $VERIFIER" >&2
+    exit 1
+fi
+
+if [ ! -f "$DEPENDENCY_LOCK" ] || [ -L "$DEPENDENCY_LOCK" ]; then
+    echo "ERROR: verified dependency lock is missing or unsafe: $DEPENDENCY_LOCK" >&2
     exit 1
 fi
 
@@ -118,7 +124,10 @@ trap - EXIT
 flock -u 8
 
 if ! SIGN_OUTPUT="$(
-    uv run --python 3.12 sign.py say "$ROOM" "$NONCE" "$TEXT"
+    UV_OFFLINE=1 uv run \
+        --python 3.12 \
+        --with-requirements "$DEPENDENCY_LOCK" \
+        sign.py say "$ROOM" "$NONCE" "$TEXT"
 )"; then
     echo "ERROR: signing failed; message not sent" >&2
     exit 1
@@ -162,7 +171,10 @@ ENVELOPE_JSON="$(
 )"
 
 if ! printf '%s' "$ENVELOPE_JSON" |
-     uv run "$VERIFIER" >/dev/null; then
+     UV_OFFLINE=1 uv run \
+        --python 3.12 \
+        --with-requirements "$DEPENDENCY_LOCK" \
+        "$VERIFIER" >/dev/null; then
     echo "ERROR: local signature verification failed; message not sent" >&2
     exit 1
 fi

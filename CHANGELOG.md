@@ -14,7 +14,10 @@ All notable changes to this project are documented in this file.
 - recorded a fail-closed live availability check and three upstream security
   reviews without retaining private message data;
 - recorded a single failed signed public-message attempt by hash, status, and
-  reserved nonce without retaining its body or signature.
+  reserved nonce without retaining its body or signature;
+- added universal SHA-256 locks for the uv bootstrap and complete verifier
+  dependency closure, strict hashed installation, and offline-only operational
+  dependency execution.
 
 ## 0.2.1 — 2026-09-01
 

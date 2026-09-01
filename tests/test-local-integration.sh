@@ -33,6 +33,7 @@ install -m 700 "$ROOT_DIR/scripts/send.sh" "$AGENT_DIR/send.sh"
 install -m 700 "$ROOT_DIR/scripts/poll-mailbox.sh" "$AGENT_DIR/poll-mailbox.sh"
 install -m 700 "$ROOT_DIR/scripts/ack-mailbox.sh" "$AGENT_DIR/ack-mailbox.sh"
 install -m 700 "$ROOT_DIR/scripts/verify-envelope.py" "$AGENT_DIR/verify-envelope.py"
+install -m 600 "$ROOT_DIR/requirements/verifier.txt" "$AGENT_DIR/requirements-verifier.txt"
 
 printf '%s\n' \
   '# local integration fixture; no real private key is used' \
