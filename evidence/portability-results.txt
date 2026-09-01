@@ -1,8 +1,9 @@
 DATE=2026-09-01
-COMMIT=ce290e0daec415f67ed57ee59be44709f419536e
+COMMIT=40c3ab90ed35b4bdc56ca956c69451f56f4c5307
 WORKFLOW=Network-free safety tests
-WORKFLOW_RUN=https://github.com/StanCan321/flop-contributions/actions/runs/33517345041
+WORKFLOW_RUN=https://github.com/StanCan321/flop-contributions/actions/runs/33529682548
 UBUNTU_22_04_X86_64=pass
 UBUNTU_24_04_X86_64=pass
-ARM64=not_tested
+UBUNTU_24_04_ARM64=pass
+ARM64_REPORTED_ARCHITECTURE=aarch64
 RESULT=pass

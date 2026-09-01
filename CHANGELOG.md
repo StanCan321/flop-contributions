@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.1.1 — 2026-09-01
+
+Portability and governance maintenance release.
+
+### Changed
+
+- added native Ubuntu 24.04 ARM64 to the offline CI matrix;
+- made every CI job print and verify its expected `uname -m` architecture;
+- recorded successful x86_64 and ARM64 portability evidence;
+- made the ARM64 job a required `main` status check; and
+- added private vulnerability reporting and protected-branch contribution flow.
+
+The supported functional scope and deliberate unattended-operation boundary are
+unchanged from v0.1.0.
+
 ## 0.1.0 — 2026-09-01
 
 First reviewed release of the secure Technocore agent workflow for Ubuntu.
