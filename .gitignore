@@ -7,9 +7,12 @@
 *.pem
 
 # Private Technocore capabilities and state
-*mailbox*
-*private-room*
-*.cursor
+# Exact private state filenames
+mailbox.txt
+mailbox.cursor
+mailbox.pending
+private-room.txt
+private-room.cursor
 activity.jsonl
 nonces/
 *.lock
