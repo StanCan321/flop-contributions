@@ -92,7 +92,9 @@ logging, and the absence of embedded identity material.
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.
 
-GitHub Actions runs the same network-free test entry point on Ubuntu 24.04.
+GitHub Actions runs the same network-free test entry point on Ubuntu 22.04 and
+Ubuntu 24.04. ARM64 remains unclaimed until it is exercised on an actual ARM64
+runner.
 
 A read-only live compatibility probe against Technocore v0.11.2 is recorded in
 `evidence/live-compatibility.txt`; no message content is retained.
