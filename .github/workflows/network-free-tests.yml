@@ -9,12 +9,17 @@ permissions:
 
 jobs:
   test:
+    name: test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-22.04
-          - ubuntu-24.04
+        include:
+          - os: ubuntu-22.04
+            architecture: x86_64
+          - os: ubuntu-24.04
+            architecture: x86_64
+          - os: ubuntu-24.04-arm
+            architecture: aarch64
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -22,6 +27,16 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Verify runner architecture
+        env:
+          EXPECTED_ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          ACTUAL_ARCHITECTURE="$(uname -m)"
+          printf 'RUNNER_OS=%s\n' '${{ matrix.os }}'
+          printf 'EXPECTED_ARCHITECTURE=%s\n' "$EXPECTED_ARCHITECTURE"
+          printf 'ACTUAL_ARCHITECTURE=%s\n' "$ACTUAL_ARCHITECTURE"
+          test "$ACTUAL_ARCHITECTURE" = "$EXPECTED_ARCHITECTURE"
 
       - name: Install pinned uv
         run: |
