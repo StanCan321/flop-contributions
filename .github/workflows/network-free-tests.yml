@@ -29,9 +29,11 @@ jobs:
           "$RUNNER_TEMP/uv-venv/bin/pip" install --disable-pip-version-check uv==0.12.5
           echo "$RUNNER_TEMP/uv-venv/bin" >>"$GITHUB_PATH"
 
-      - name: Prime pinned verifier dependency
+      - name: Prepare Python 3.12 and pinned verifier dependency
         run: |
+          uv python install 3.12
           uv run \
+            --python 3.12 \
             --with 'cryptography==50.0.1' \
             python -c 'import cryptography; assert cryptography.__version__ == "50.0.1"'
 

@@ -95,11 +95,12 @@ acknowledgement, and a follow-up poll against a stateful local service fixture.
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.
 
-GitHub Actions first acquires the pinned verifier dependency, then runs the same
-test entry point with uv offline mode enforced on Ubuntu 22.04 and Ubuntu 24.04.
-This prevents uv from silently acquiring a dependency during validation; the
-test fixtures replace Technocore network calls with local state. ARM64 remains
-unclaimed until it is exercised on an actual ARM64 runner.
+GitHub Actions first acquires Python 3.12 and the pinned verifier dependency,
+then runs the same test entry point with uv offline mode enforced on Ubuntu
+22.04 and Ubuntu 24.04. This prevents uv from silently acquiring a runtime or
+dependency during validation; the test fixtures replace Technocore network
+calls with local state. ARM64 remains unclaimed until it is exercised on an
+actual ARM64 runner.
 
 A read-only live compatibility probe against Technocore v0.11.2 is recorded in
 `evidence/live-compatibility.txt`; no message content is retained.
