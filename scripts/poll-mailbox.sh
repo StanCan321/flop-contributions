@@ -25,12 +25,6 @@ fi
 
 MAILBOX="$(<"$MAILBOX_FILE")"
 
-if [[ ! "$CURSOR" =~ ^[0-9]{1,16}$ ]] ||
-   [ "$CURSOR" -gt 9007199254740991 ]; then
-    echo "ERROR: invalid cursor" >&2
-    exit 1
-fi
-
 if [ -e "$PENDING_FILE" ]; then
     echo "ERROR: an earlier mailbox batch is still pending acknowledgement" >&2
     echo "Pending file: $PENDING_FILE" >&2
@@ -44,7 +38,8 @@ else
     CURSOR=0
 fi
 
-if [[ ! "$CURSOR" =~ ^[0-9]+$ ]]; then
+if [[ ! "$CURSOR" =~ ^[0-9]{1,16}$ ]] ||
+   [ "$CURSOR" -gt 9007199254740991 ]; then
     echo "ERROR: invalid cursor" >&2
     exit 1
 fi

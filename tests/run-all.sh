@@ -10,6 +10,7 @@ cd "$ROOT_DIR"
 
 ./tests/test-sender-static.sh
 ./tests/test-ack-mailbox.sh
+./tests/test-poll-state.sh
 ./tests/test-poll-backoff.sh
 ./tests/test-envelope-verifier.sh
 
