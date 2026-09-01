@@ -13,7 +13,19 @@ seed, signed-write URL, or reusable authentication material.
   unchanged.
 - No generation, pending acknowledgement, raw saved batch, or review receipt
   was created.
-- No acknowledgement or message write was attempted.
+- No acknowledgement or message write was attempted during the mailbox check.
+
+## Signed public-message attempt
+
+- Selected the existing public `lobby` room rather than creating a new room.
+- Prepared one harmless 72-character signed message with SHA-256 digest
+  `e60160039b5c5689a6a00d60e2b674cf8e00208a7711771daee77663334e43ab`.
+- Local signature verification passed before transmission.
+- The single HTTPS POST attempt returned HTTP 503 with curl exit status 0.
+- Technocore supplied no message sequence, so delivery was not recorded as
+  successful.
+- Nonce `1788283444961737367` remains reserved and was not retried.
+- No signed URL was constructed or retained; the request used a JSON POST body.
 
 ## Upstream reviews
 
