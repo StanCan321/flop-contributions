@@ -199,6 +199,176 @@ same seed must always produce exactly the same DID.
 A Technocore DID proves control of its Ed25519 key. It is not a wallet address,
 legal identity, official project role, or guarantee of testnet eligibility.
 
+## Create an encrypted offline backup
+
+An identity without a tested backup can be permanently lost. The backup must be
+encrypted before private material reaches removable storage.
+
+This procedure does not format or erase the USB drive.
+
+### Identify the mounted USB drive
+
+Insert the drive and inspect removable devices:
+
+```bash
+lsblk -o NAME,TRAN,SIZE,FSTYPE,LABEL,MOUNTPOINTS
+```
+
+Select only a partition whose parent device reports `TRAN=usb` and which has an
+existing mount point, commonly under `/media/$USER/`.
+
+Set the actual mount point:
+
+```bash
+USB_MOUNT="/media/$USER/REPLACE-WITH-USB-LABEL"
+```
+
+Do not set this variable to `/dev/sdX`, `/`, `$HOME`, or another broad
+filesystem path.
+
+Validate it:
+
+```bash
+mountpoint "$USB_MOUNT"
+findmnt "$USB_MOUNT"
+test -w "$USB_MOUNT" && echo "USB is writable"
+```
+
+Stop if it is not the intended mounted USB filesystem.
+
+### Create the encrypted archive
+
+Create a unique filename:
+
+```bash
+BACKUP_FILE="$USB_MOUNT/flop-identity-backup-$(date -u +%Y%m%d-%H%M%S).tar.gpg"
+
+if [ -e "$BACKUP_FILE" ]; then
+    echo "ERROR: refusing to overwrite an existing backup" >&2
+    exit 1
+fi
+```
+
+Encrypt the identity, signer, and public identity record in one pipeline:
+
+```bash
+tar \
+  -C "$HOME" \
+  -cf - \
+  .technocore-env \
+  technocore-agent/sign.py \
+  flop/README.md |
+gpg \
+  --symmetric \
+  --cipher-algo AES256 \
+  --output "$BACKUP_FILE"
+```
+
+GnuPG requests the encryption passphrase interactively. Use a long, unique
+passphrase that is not the Ubuntu password, `SIGN_SEED`, or a wallet password.
+
+Store the passphrase separately from the USB drive.
+
+Create and verify a corruption-detection checksum:
+
+```bash
+sha256sum "$BACKUP_FILE" >"$BACKUP_FILE.sha256"
+sha256sum -c "$BACKUP_FILE.sha256"
+```
+
+Expected result: `OK`.
+
+### Verify the encrypted archive
+
+List the archive without extracting it:
+
+```bash
+gpg --quiet --decrypt "$BACKUP_FILE" |
+tar -tf -
+```
+
+Expected entries:
+
+```text
+.technocore-env
+technocore-agent/sign.py
+flop/README.md
+```
+
+The private seed must not be printed.
+
+### Perform a recovery test in temporary memory
+
+Confirm `/dev/shm` is a `tmpfs` filesystem:
+
+```bash
+findmnt /dev/shm
+```
+
+Create a temporary private directory:
+
+```bash
+RECOVERY_DIR="$(mktemp -d /dev/shm/flop-recovery.XXXXXX)"
+chmod 700 "$RECOVERY_DIR"
+```
+
+Decrypt the backup into that directory:
+
+```bash
+(
+    set -o pipefail
+
+    gpg --quiet --decrypt "$BACKUP_FILE" |
+    tar -xf - -C "$RECOVERY_DIR"
+)
+```
+
+Protect the recovered secret and derive its DID:
+
+```bash
+chmod 600 "$RECOVERY_DIR/.technocore-env"
+
+(
+    set -euo pipefail
+    source "$RECOVERY_DIR/.technocore-env"
+    export SIGN_SEED
+
+    uv run --python 3.12 \
+      "$RECOVERY_DIR/technocore-agent/sign.py" did
+)
+```
+
+The recovered DID must exactly match the established public DID.
+
+Remove the temporary decrypted copy:
+
+```bash
+rm -rf "$RECOVERY_DIR"
+unset RECOVERY_DIR
+```
+
+Confirm removal:
+
+```bash
+find /dev/shm \
+  -maxdepth 1 \
+  -type d \
+  -name 'flop-recovery.*' \
+  -print
+```
+
+Expected: no output.
+
+Flush pending USB writes before using Ubuntu's graphical eject control:
+
+```bash
+sync
+```
+
+Maintain a second encrypted backup on a separate drive in a different secure
+physical location. A single USB drive is not sufficient protection against
+loss or hardware failure.
+
 ## Planned sections
 
 1. Install prerequisites
