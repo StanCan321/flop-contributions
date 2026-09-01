@@ -438,6 +438,11 @@ Verification occurs immediately before the HTTPS request. The complete signed
 envelope is not retained as durable proof because retaining it would also
 retain replayable request material.
 
+The sender also validates the signing program's exit status and output shape.
+Signing failures, malformed output, invalid Ed25519 DIDs, and noncanonical
+base64url signatures stop before the HTTPS request. A nonce reserved before
+such a failure remains spent and is never reused.
+
 
 A failed or timed-out request must not be blindly repeated. First inspect the
 room for the DID and nonce. If the write is absent, invoke the sender again so

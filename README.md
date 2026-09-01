@@ -65,6 +65,7 @@ identity, official project status, or the truthworthiness of message content.
 - Atomic cursor updates and regression protection
 - Bounded polling backoff
 - Network-free regression tests
+- Dynamic mocked sender failure-path tests
 
 ## Deliberately deferred
 
@@ -85,7 +86,8 @@ Run all network-free safety and regression checks:
 These checks validate the signed POST sender, local Ed25519 envelope
 verification, transactional mailbox acknowledgement, cursor-regression
 protection, generation discontinuities, waiter-refusal backoff, retained
-signatures, redacted logging, and the absence of embedded identity material.
+signatures, signer/verifier/HTTP failure paths, nonce non-reuse, redacted
+logging, and the absence of embedded identity material.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.

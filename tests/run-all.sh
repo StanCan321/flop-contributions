@@ -9,6 +9,7 @@ ROOT_DIR="$(
 cd "$ROOT_DIR"
 
 ./tests/test-sender-static.sh
+./tests/test-sender-dynamic.sh
 ./tests/test-ack-mailbox.sh
 ./tests/test-poll-state.sh
 ./tests/test-poll-backoff.sh

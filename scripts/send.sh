@@ -117,12 +117,33 @@ mv -f "$NONCE_TMP" "$NONCE_FILE"
 trap - EXIT
 flock -u 8
 
-mapfile -t OUT < <(
+if ! SIGN_OUTPUT="$(
     uv run --python 3.12 sign.py say "$ROOM" "$NONCE" "$TEXT"
-)
+)"; then
+    echo "ERROR: signing failed; message not sent" >&2
+    exit 1
+fi
+
+mapfile -t OUT <<<"$SIGN_OUTPUT"
+unset SIGN_OUTPUT
+
+if [ "${#OUT[@]}" -ne 2 ]; then
+    echo "ERROR: signer returned an unexpected number of lines; message not sent" >&2
+    exit 1
+fi
 
 DID="${OUT[0]}"
 SIG="${OUT[1]}"
+
+if [[ ! "$DID" =~ ^did:key:z6Mk[1-9A-HJ-NP-Za-km-z]{44}$ ]]; then
+    echo "ERROR: signer returned an invalid Ed25519 DID; message not sent" >&2
+    exit 1
+fi
+
+if [[ ! "$SIG" =~ ^[A-Za-z0-9_-]{85}[AQgw]$ ]]; then
+    echo "ERROR: signer returned a noncanonical signature; message not sent" >&2
+    exit 1
+fi
 
 ENVELOPE_JSON="$(
     jq -cn \
