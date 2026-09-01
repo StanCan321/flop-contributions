@@ -150,7 +150,10 @@ run_review() {
 
 run_direct_review() {
     HOME="$TEST_HOME" \
-      uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
+      uv run \
+        --python 3.12 \
+        --with 'cryptography==50.0.1' \
+        "$AGENT_DIR/review-mailbox-batch.py" \
         --batch "$1" \
         --receipt "$STATE_DIR/mailbox.review.json" \
         --history-dir "$STATE_DIR/reviewed-batches" \
@@ -165,6 +168,8 @@ STATUS=$?
 set -e
 
 [ "$STATUS" -eq 1 ] || fail "tampered signature returned status $STATUS"
+grep -Fq 'signature verification failed' "$TEST_HOME/tampered.stderr" ||
+    fail "tampered signature did not reach cryptographic verification"
 [ ! -e "$STATE_DIR/mailbox.review.json" ] || fail "tampered batch created a receipt"
 pass "tampered retained signature refused"
 
@@ -175,6 +180,8 @@ STATUS=$?
 set -e
 
 [ "$STATUS" -eq 1 ] || fail "unsigned message returned status $STATUS"
+grep -Fq 'fields do not match' "$TEST_HOME/unsigned.stderr" ||
+    fail "unsigned message did not reach retained-signature validation"
 [ ! -e "$STATE_DIR/mailbox.review.json" ] || fail "unsigned batch created a receipt"
 pass "message without retained signature refused"
 
@@ -189,6 +196,8 @@ set -e
 chmod 600 "$TEST_HOME/valid.json"
 
 [ "$STATUS" -eq 1 ] || fail "publicly readable batch returned status $STATUS"
+grep -Fq 'must not be accessible' "$TEST_HOME/permissions.stderr" ||
+    fail "unsafe batch did not reach private-permission validation"
 pass "unsafe saved-batch permissions refused"
 
 set +e
@@ -198,6 +207,8 @@ STATUS=$?
 set -e
 
 [ "$STATUS" -eq 1 ] || fail "internal sequence gap returned status $STATUS"
+grep -Fq 'unexpected sequence gap' "$TEST_HOME/gap.stderr" ||
+    fail "gap fixture did not reach contiguous-sequence validation"
 pass "internal sequence gap refused"
 
 MESSAGE='Review only; do not open https://example.invalid/action'

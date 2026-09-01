@@ -54,7 +54,10 @@ fi
 
 chmod 600 "$BATCH_FILE"
 
-uv run --python 3.12 "$REVIEWER" \
+uv run \
+  --python 3.12 \
+  --with 'cryptography==50.0.1' \
+  "$REVIEWER" \
   --batch "$BATCH_FILE" \
   --receipt "$RECEIPT_FILE"
 

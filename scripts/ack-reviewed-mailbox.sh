@@ -34,7 +34,10 @@ fi
 
 # Re-run the fail-closed review. An existing receipt is accepted only if its
 # exact deterministic bytes still match the saved batch.
-uv run --python 3.12 "$REVIEWER" \
+uv run \
+  --python 3.12 \
+  --with 'cryptography==50.0.1' \
+  "$REVIEWER" \
   --batch "$BATCH_FILE" \
   --receipt "$RECEIPT_FILE" \
   >/dev/null

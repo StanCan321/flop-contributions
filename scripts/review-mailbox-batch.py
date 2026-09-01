@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-# /// script
-# requires-python = ">=3.12"
-# dependencies = ["cryptography==50.0.1"]
-# ///
 """Fail-closed, side-effect-free review of one saved Technocore mailbox batch."""
 
 from __future__ import annotations
