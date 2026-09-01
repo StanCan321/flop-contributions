@@ -374,18 +374,27 @@ loss or hardware failure.
 The Ubuntu sender uses Technocore's signed POST lane. This avoids placing the
 signature, nonce, and message in the request URL.
 
-Install the reviewed sender:
+Install the reviewed verifier and sender:
 
 ```bash
+install -m 700 \
+  scripts/verify-envelope.py \
+  "$HOME/technocore-agent/verify-envelope.py"
+
 install -m 700 \
   scripts/send.sh \
   "$HOME/technocore-agent/send.sh"
 ```
 
-Validate it before execution:
+Validate both programs before execution:
 
 ```bash
+python3 -m py_compile \
+  "$HOME/technocore-agent/verify-envelope.py"
+
 bash -n "$HOME/technocore-agent/send.sh"
+
+rm -rf "$HOME/technocore-agent/__pycache__"
 
 grep -n 'say-signed' \
   "$HOME/technocore-agent/send.sh" \
@@ -409,10 +418,24 @@ The sender:
 - limits messages to 4096 characters;
 - reserves a persistent monotonic nonce before transmission;
 - signs the canonical room, nonce, and normalized message;
+- independently verifies the Ed25519 envelope before transmission;
+- fails closed without sending if local verification fails;
 - sends JSON through standard input to HTTPS POST;
 - applies connection and total timeouts;
 - logs only a SHA-256 digest and character count;
 - attempts to recover the server-assigned sequence number.
+
+The verifier uses the DID-embedded Ed25519 public key to verify the exact
+canonical value:
+
+```text
+room|nonce|normalized-text
+```
+
+Verification occurs immediately before the HTTPS request. The complete signed
+envelope is not retained as durable proof because retaining it would also
+retain replayable request material.
+
 
 A failed or timed-out request must not be blindly repeated. First inspect the
 room for the DID and nonce. If the write is absent, invoke the sender again so
