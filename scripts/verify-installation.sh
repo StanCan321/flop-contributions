@@ -48,8 +48,12 @@ while IFS= read -r LINE || [ -n "$LINE" ]; do
     [ ! -L "$TARGET" ] || fail "installed file must not be a symbolic link: $NAME"
     [ "$(stat -c '%u' "$TARGET")" = "$EXPECTED_UID" ] ||
         fail "installed file has an unexpected owner: $NAME"
-    [ "$(stat -c '%a' "$TARGET")" = "700" ] ||
-        fail "installed file must have mode 700: $NAME"
+    EXPECTED_MODE=700
+    if [[ "$NAME" == *.txt ]]; then
+        EXPECTED_MODE=600
+    fi
+    [ "$(stat -c '%a' "$TARGET")" = "$EXPECTED_MODE" ] ||
+        fail "installed file must have mode $EXPECTED_MODE: $NAME"
 
     ACTUAL_HASH="$(sha256sum "$TARGET")"
     ACTUAL_HASH="${ACTUAL_HASH%% *}"

@@ -1,6 +1,17 @@
 version: 2
 
 updates:
+  - package-ecosystem: pip
+    directory: /requirements
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: security
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

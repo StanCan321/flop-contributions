@@ -32,6 +32,7 @@ mkdir -p "$MOCK_BIN" "$AGENT_DIR"
 chmod 700 "$TEST_HOME" "$MOCK_BIN" "$AGENT_DIR"
 
 install -m 700 "$SENDER" "$AGENT_DIR/send.sh"
+install -m 600 "$ROOT_DIR/requirements/verifier.txt" "$AGENT_DIR/requirements-verifier.txt"
 
 printf '%s\n' \
   '# test fixture: the mock signer does not read this value' \
@@ -52,6 +53,10 @@ set -euo pipefail
 shift
 
 if [ "${1:-}" = "--python" ]; then
+    shift 2
+fi
+
+if [ "${1:-}" = "--with-requirements" ]; then
     shift 2
 fi
 

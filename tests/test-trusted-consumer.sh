@@ -33,6 +33,7 @@ install -m 700 "$ROOT_DIR/scripts/review-mailbox-batch.py" "$AGENT_DIR/review-ma
 install -m 700 "$ROOT_DIR/scripts/review-mailbox.sh" "$AGENT_DIR/review-mailbox.sh"
 install -m 700 "$ROOT_DIR/scripts/ack-reviewed-mailbox.sh" "$AGENT_DIR/ack-reviewed-mailbox.sh"
 install -m 700 "$ROOT_DIR/scripts/verify-envelope.py" "$AGENT_DIR/verify-envelope.py"
+install -m 600 "$ROOT_DIR/requirements/verifier.txt" "$AGENT_DIR/requirements-verifier.txt"
 
 printf '%s\n' test-room >"$STATE_DIR/mailbox.txt"
 chmod 600 "$STATE_DIR/mailbox.txt"
@@ -155,7 +156,7 @@ run_direct_review() {
     UV_CACHE_DIR="$TEST_UV_CACHE_DIR" \
       uv run \
         --python 3.12 \
-        --with 'cryptography==50.0.1' \
+        --with-requirements "$AGENT_DIR/requirements-verifier.txt" \
         "$AGENT_DIR/review-mailbox-batch.py" \
         --batch "$1" \
         --receipt "$STATE_DIR/mailbox.review.json" \

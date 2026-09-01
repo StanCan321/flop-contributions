@@ -28,10 +28,11 @@ pass() {
 mkdir -m 700 "$AGENT_DIR"
 install -m 700 "$ROOT_DIR/scripts/send.sh" "$AGENT_DIR/send.sh"
 install -m 700 "$ROOT_DIR/scripts/verify-envelope.py" "$AGENT_DIR/verify-envelope.py"
+install -m 600 "$ROOT_DIR/requirements/verifier.txt" "$AGENT_DIR/requirements-verifier.txt"
 
 (
     cd "$AGENT_DIR"
-    sha256sum send.sh verify-envelope.py
+    sha256sum send.sh verify-envelope.py requirements-verifier.txt
 ) >"$MANIFEST"
 
 "$ROOT_DIR/scripts/verify-installation.sh" "$AGENT_DIR" "$MANIFEST" >/dev/null ||

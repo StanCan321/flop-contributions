@@ -78,7 +78,13 @@ pass "no embedded identity material"
 grep -Fq 'VERIFIER="$HOME/technocore-agent/verify-envelope.py"' "$SENDER" ||
     fail "local envelope verifier path is missing"
 
-grep -Fq 'uv run "$VERIFIER"' "$SENDER" ||
+grep -Fq 'requirements-verifier.txt' "$SENDER" ||
+    fail "sender does not require the installed dependency lock"
+
+grep -Fq 'UV_OFFLINE=1 uv run' "$SENDER" ||
+    fail "sender does not force offline dependency execution"
+
+grep -Fq '"$VERIFIER" >/dev/null' "$SENDER" ||
     fail "sender does not invoke the local verifier"
 
 grep -Fq "local signature verification failed" "$SENDER" ||
