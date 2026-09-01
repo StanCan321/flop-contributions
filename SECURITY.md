@@ -2,14 +2,11 @@
 
 ## Supported versions
 
-This repository has not published a stable release yet.
-
 | Version | Supported |
 | --- | --- |
-| Current `main` branch | Yes |
-| Older commits and copied scripts | No |
-
-After releases begin, this table will identify the supported release line.
+| `0.1.x` | Yes |
+| Current `main` branch | Yes, for upcoming fixes |
+| Older untagged commits and copied scripts | No |
 
 ## Report a vulnerability privately
 
