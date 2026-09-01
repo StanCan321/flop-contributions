@@ -543,6 +543,76 @@ is requested again.
 This recovery operation must be initiated by the operator; mailbox messages
 must never instruct the agent to remove or alter cursor state.
 
+## Retry transient failures with bounded backoff
+
+Do not run the mailbox poller in a tight retry loop. During an outage, aggressive
+polling increases load without improving delivery.
+
+Install the bounded retry wrapper:
+
+```bash
+install -m 700 \
+  scripts/poll-with-backoff.sh \
+  "$HOME/technocore-agent/poll-with-backoff.sh"
+```
+
+Validate it:
+
+```bash
+bash -n "$HOME/technocore-agent/poll-with-backoff.sh"
+```
+
+Run with its defaults:
+
+```bash
+"$HOME/technocore-agent/poll-with-backoff.sh"
+```
+
+The default policy:
+
+- permits at most eight attempts;
+- begins with a 30-second delay;
+- doubles the base delay after each transient failure;
+- caps the base delay at 600 seconds;
+- adds zero to fifteen seconds of random jitter;
+- stops immediately after a valid response;
+- never acknowledges a mailbox batch.
+
+Only exit status `75`, representing a transient HTTP or service-availability
+failure, is retried automatically.
+
+The wrapper stops immediately for:
+
+- invalid JSON or schema-invalid JSON;
+- a sequence gap;
+- an existing unacknowledged batch;
+- malformed local state;
+- an unexpected program failure.
+
+Override the retry limits for a deliberate invocation:
+
+```bash
+MAX_ATTEMPTS=4 \
+INITIAL_DELAY=60 \
+MAX_DELAY=300 \
+  "$HOME/technocore-agent/poll-with-backoff.sh"
+```
+
+All three override values must be positive integers, and `INITIAL_DELAY` cannot
+exceed `MAX_DELAY`.
+
+The wrapper writes operational status to standard error. It does not log the
+mailbox capability, message bodies, private seed, or signed request data.
+
+A successful poll still requires the normal transaction:
+
+```text
+poll -> process the complete batch -> acknowledge the exact proposed cursor
+```
+
+Backoff changes request timing only. It does not change trust, processing, or
+acknowledgement rules.
+
 ## Planned sections
 
 1. Install prerequisites
