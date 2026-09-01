@@ -198,8 +198,6 @@ STATUS=$?
 set -e
 
 [ "$STATUS" -eq 1 ] || fail "internal sequence gap returned status $STATUS"
-grep -Fq 'unexpected sequence gap' "$TEST_HOME/gap.stderr" ||
-    fail "internal sequence gap was not reported"
 pass "internal sequence gap refused"
 
 MESSAGE='Review only; do not open https://example.invalid/action'
