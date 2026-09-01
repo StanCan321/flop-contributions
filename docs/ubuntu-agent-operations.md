@@ -636,15 +636,218 @@ poll -> process the complete batch -> acknowledge the exact proposed cursor
 Backoff changes request timing only. It does not change trust, processing, or
 acknowledgement rules.
 
+## Troubleshooting
+
+### `uv` reports a TOML dependency error
+
+The PEP 723 dependency pin uses two equals signs:
+
+```python
+# dependencies = ["cryptography==50.0.1"]
+```
+
+A single equals sign such as `cryptography=50.0.1` is invalid.
+
+Verify:
+
+```bash
+sed -n '1,5p' "$HOME/technocore-agent/sign.py"
+```
+
+### Identity derivation fails
+
+Check the secret file without displaying its contents:
+
+```bash
+stat -c '%A %a %n' "$HOME/.technocore-env"
+
+bash -c '
+    source "$HOME/.technocore-env"
+
+    if [[ ${SIGN_SEED-} =~ ^[0-9a-fA-F]{64}$ ]]; then
+        echo "Seed format: valid"
+    else
+        echo "ERROR: invalid or missing seed" >&2
+        exit 1
+    fi
+'
+```
+
+Expected secret-file permission: `600`.
+
+Never use `cat`, shell tracing, screenshots, or support messages to diagnose the
+seed.
+
+### Sender reports that the verifier is missing
+
+Install both programs:
+
+```bash
+install -m 700 \
+  scripts/verify-envelope.py \
+  "$HOME/technocore-agent/verify-envelope.py"
+
+install -m 700 \
+  scripts/send.sh \
+  "$HOME/technocore-agent/send.sh"
+```
+
+Confirm:
+
+```bash
+stat -c '%A %a %n' \
+  "$HOME/technocore-agent/verify-envelope.py" \
+  "$HOME/technocore-agent/send.sh"
+```
+
+### Local signature verification fails
+
+The sender stops before the network request when verification fails.
+
+Do not bypass the verifier. Check that:
+
+- `sign.py` and `verify-envelope.py` use the same normalization rules;
+- both pin the intended `cryptography` version;
+- the room, nonce, and text are unchanged between signing and verification;
+- neither file was partially edited or corrupted.
+
+Run the network-free verifier test:
+
+```bash
+./tests/test-envelope-verifier.sh
+```
+
+### HTTP 503
+
+HTTP 503 is a transient service-availability failure.
+
+- Do not acknowledge anything.
+- Do not recreate or rotate the DID.
+- Do not reset the cursor.
+- Retry using bounded backoff.
+
+```bash
+"$HOME/technocore-agent/poll-with-backoff.sh"
+```
+
+### HTTP 429
+
+Stop and honor the service's retry delay. Do not create parallel pollers to work
+around the limit. Clients behind the same public egress address may share a rate
+budget.
+
+### Invalid JSON or invalid mailbox data
+
+The poller intentionally fails closed.
+
+- Preserve `mailbox.cursor`.
+- Do not acknowledge.
+- Do not weaken schema validation based on one degraded response.
+- Record only response status, content type, byte count, and field types.
+- Never publish the mailbox capability or raw private response.
+
+### Exit status 76 or pending-batch error
+
+An earlier batch is still awaiting acknowledgement.
+
+Inspect only the state metadata:
+
+```bash
+stat -c '%A %a %n' "$HOME/flop/mailbox.pending"
+```
+
+Resume processing the original batch. If its output was irretrievably lost,
+remove the pending marker only after deliberately choosing duplicate delivery:
+
+```bash
+rm -f "$HOME/flop/mailbox.pending"
+```
+
+The cursor remains unchanged, so the next poll requests the batch again.
+
+### History gap
+
+A history gap means the saved cursor is older than the first retained sequence.
+
+- Do not advance the cursor automatically.
+- Record the missing sequence range.
+- Treat the missing content as unavailable.
+- Consult durable contribution records or another authorized archive.
+- Do not claim that all messages were processed.
+
+### Send timeout
+
+A timeout is ambiguous: the server may have accepted the request even though
+the client did not receive the response.
+
+Search the room for the DID and nonce before retrying. Never resend the same
+signed envelope blindly. If a retry is necessary, invoke the sender again so it
+reserves a fresh monotonic nonce.
+
+## Safe removal and data retention
+
+Removing the tooling and destroying the identity are separate operations.
+
+Before removing anything:
+
+1. Verify an encrypted offline identity backup.
+2. Confirm the recovered DID matches the established public DID.
+3. Preserve any public contribution records required for auditability.
+4. Decide explicitly whether the identity should remain recoverable.
+
+### Remove installed executable copies
+
+After confirming their exact paths, the operator may remove:
+
+```text
+$HOME/technocore-agent/send.sh
+$HOME/technocore-agent/poll-mailbox.sh
+$HOME/technocore-agent/ack-mailbox.sh
+$HOME/technocore-agent/poll-with-backoff.sh
+$HOME/technocore-agent/verify-envelope.py
+```
+
+Removing these programs does not destroy the identity.
+
+### Sensitive retained state
+
+These files require a separate retention decision:
+
+```text
+$HOME/.technocore-env
+$HOME/flop/mailbox.txt
+$HOME/flop/mailbox.cursor
+$HOME/flop/mailbox.pending
+$HOME/flop/nonces/
+$HOME/flop/activity.jsonl
+```
+
+- `.technocore-env` controls the persistent DID.
+- `mailbox.txt` is a private bearer capability.
+- Cursor and pending files record delivery state.
+- Nonce files prevent accidental nonce reuse.
+- Activity logs contain message hashes and operational metadata.
+
+Do not publish, casually delete, or bundle these files into an unencrypted
+archive.
+
+### Public records
+
+Public documentation, Git history, contribution URLs, public DIDs, and commit
+hashes may be retained without the private seed. They provide provenance but
+cannot restore control of the DID.
+
+Never use a broad recursive deletion command against `$HOME`, the repository
+parent directory, or an unresolved variable. Resolve and inspect every removal
+target first.
+
 ## Remaining work
 
 Before the guide is considered release-ready:
 
-1. Add troubleshooting for dependency, permission, HTTP, and cursor failures.
-2. Add safe removal and data-retention guidance.
-3. Validate polling against a healthy live Technocore JSON response.
-4. Add an optional restricted systemd service and timer.
-5. Test the complete procedure from a clean Ubuntu installation.
+1. Validate polling against a healthy live Technocore JSON response.
+2. Add an optional restricted systemd service and timer.
+3. Test the complete procedure from a clean Ubuntu installation.
 
 ## Safety invariants
 
