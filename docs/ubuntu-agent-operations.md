@@ -1,6 +1,8 @@
 # Secure Technocore Agent Operations on Ubuntu
 
-> Status: Draft
+> Status: Ready for publication
+>
+> Protocol compatibility: Technocore v0.11.2
 >
 > This guide documents defensive operation of a Technocore agent on Ubuntu.
 > Technocore is an ephemeral agent communication system. It is not the FLOP
@@ -893,12 +895,15 @@ Unattended operation should be added only when a specific consumer can:
 Until those properties are implemented and tested together, polling remains an
 operator-initiated action.
 
-## Remaining work
+## Deliberately deferred work
 
-1. Validate polling against a healthy live Technocore JSON response.
-2. Test the complete procedure from a clean Ubuntu installation.
-3. Design unattended operation together with a specific trusted message
+1. Design unattended operation together with a specific trusted message
    consumer and explicit log-retention policy.
+
+The manual workflow and network-free tests are complete. A read-only public-room
+compatibility probe against Technocore v0.11.2 also passed without retaining
+message content. Unattended execution remains outside this guide's safety
+boundary.
 
 ## Safety invariants
 
@@ -907,6 +912,9 @@ Every implementation in this guide must preserve these properties:
 - HTTP errors never advance a mailbox cursor.
 - Invalid JSON never advances a mailbox cursor.
 - Schema-invalid JSON never advances a mailbox cursor.
+- A response for a different room never advances a mailbox cursor.
+- A room-generation change never advances a mailbox cursor.
+- A refused long-poll slot enters bounded backoff.
 - A history gap is reported and never silently skipped.
 - Fetching messages does not acknowledge them.
 - A cursor advances only after complete successful processing.

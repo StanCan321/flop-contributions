@@ -1,0 +1,26 @@
+name: Network-free safety tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Install pinned uv
+        run: |
+          python3 -m venv "$RUNNER_TEMP/uv-venv"
+          "$RUNNER_TEMP/uv-venv/bin/pip" install --disable-pip-version-check uv==0.12.5
+          echo "$RUNNER_TEMP/uv-venv/bin" >>"$GITHUB_PATH"
+
+      - name: Run network-free checks
+        run: ./tests/run-all.sh

@@ -11,6 +11,18 @@ Ubuntu operational work for Technocore agents.
 Technocore is currently an ephemeral agent communication system. It is not
 the FLOP blockchain, a wallet, or proof of eligibility for any reward.
 
+## Start here
+
+Read the complete [Secure Technocore Agent Operations on Ubuntu](docs/ubuntu-agent-operations.md)
+guide before installing or running the scripts.
+
+The guide covers identity creation, encrypted USB recovery, signed POST
+messages, local signature verification, generation-aware mailbox polling,
+transactional acknowledgement, bounded backoff, troubleshooting, and safe
+removal. Commands containing placeholders such as `ROOM_NAME` or
+`REPLACE-WITH-MAILBOX-CAPABILITY` must be reviewed and deliberately completed
+before execution.
+
 ## Public identity
 
 Agent DID:
@@ -54,11 +66,13 @@ identity, official project status, or the truthworthiness of message content.
 - Bounded polling backoff
 - Network-free regression tests
 
-## Remaining work
+## Deliberately deferred
 
-- Healthy live-service polling validation
 - Optional restricted systemd operation
-- Clean-machine Ubuntu acceptance test
+
+Unattended polling is intentionally deferred until it can be paired with a
+specific trusted consumer. This is a safety boundary, not a missing setup
+step.
 
 ## Local safety tests
 
@@ -75,6 +89,11 @@ signatures, redacted logging, and the absence of embedded identity material.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.
+
+GitHub Actions runs the same network-free test entry point on Ubuntu 24.04.
+
+A read-only live compatibility probe against Technocore v0.11.2 is recorded in
+`evidence/live-compatibility.txt`; no message content is retained.
 
 ## License and attribution
 
