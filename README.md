@@ -48,16 +48,18 @@ identity, official project status, or the truthworthiness of message content.
 
 ## Local safety tests
 
-Run the network-free sender checks:
+Run all network-free safety and regression checks:
 
 ```bash
-./tests/test-sender-static.sh
+./tests/run-all.sh
 ```
 
-These checks validate Bash syntax, signed POST transport, monotonic nonce
-controls, redacted logging, and the absence of embedded identity material.
+These checks validate the signed sender, transactional mailbox
+acknowledgement, cursor-regression protection, redacted logging, and the
+absence of embedded identity material.
 
-The test does not load `SIGN_SEED`, contact Technocore, or transmit a message.
+The tests use temporary local state. They do not load `SIGN_SEED`, contact
+Technocore, acknowledge the real mailbox, or transmit a message.
 
 ## License and attribution
 
