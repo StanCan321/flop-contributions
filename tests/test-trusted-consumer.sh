@@ -148,9 +148,18 @@ run_review() {
       "$AGENT_DIR/review-mailbox.sh"
 }
 
+run_direct_review() {
+    HOME="$TEST_HOME" \
+      uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
+        --batch "$1" \
+        --receipt "$STATE_DIR/mailbox.review.json" \
+        --history-dir "$STATE_DIR/reviewed-batches" \
+        --room-file "$STATE_DIR/mailbox.txt" \
+        --verifier "$AGENT_DIR/verify-envelope.py"
+}
+
 set +e
-HOME="$TEST_HOME" uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
-  --batch "$TEST_HOME/tampered.json" \
+run_direct_review "$TEST_HOME/tampered.json" \
   >"$TEST_HOME/tampered.stdout" 2>"$TEST_HOME/tampered.stderr"
 STATUS=$?
 set -e
@@ -160,8 +169,7 @@ set -e
 pass "tampered retained signature refused"
 
 set +e
-HOME="$TEST_HOME" uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
-  --batch "$TEST_HOME/unsigned.json" \
+run_direct_review "$TEST_HOME/unsigned.json" \
   >"$TEST_HOME/unsigned.stdout" 2>"$TEST_HOME/unsigned.stderr"
 STATUS=$?
 set -e
@@ -174,8 +182,7 @@ chmod 644 "$TEST_HOME/valid.json"
 [ "$(stat -c '%a' "$TEST_HOME/valid.json")" = "644" ] ||
     fail "permission fixture was not made publicly readable"
 set +e
-HOME="$TEST_HOME" uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
-  --batch "$TEST_HOME/valid.json" \
+run_direct_review "$TEST_HOME/valid.json" \
   >"$TEST_HOME/permissions.stdout" 2>"$TEST_HOME/permissions.stderr"
 STATUS=$?
 set -e
@@ -185,8 +192,7 @@ chmod 600 "$TEST_HOME/valid.json"
 pass "unsafe saved-batch permissions refused"
 
 set +e
-HOME="$TEST_HOME" uv run --python 3.12 "$AGENT_DIR/review-mailbox-batch.py" \
-  --batch "$TEST_HOME/gap.json" \
+run_direct_review "$TEST_HOME/gap.json" \
   >"$TEST_HOME/gap.stdout" 2>"$TEST_HOME/gap.stderr"
 STATUS=$?
 set -e
