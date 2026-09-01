@@ -40,6 +40,11 @@ fi
 
 MAILBOX="$(<"$MAILBOX_FILE")"
 
+if [[ ! "$MAILBOX" =~ ^[a-z0-9][a-z0-9_-]{0,47}$ ]]; then
+    echo "ERROR: invalid mailbox name" >&2
+    exit 1
+fi
+
 if [ -e "$PENDING_FILE" ]; then
     echo "ERROR: an earlier mailbox batch is still pending acknowledgement" >&2
     echo "Pending file: $PENDING_FILE" >&2
@@ -106,8 +111,16 @@ if [ "$HTTP" != "200" ]; then
 fi
 
 # Validate both JSON syntax and the fields subsequently used as integers.
-if ! jq -e '
-    (
+if ! jq -e \
+    --arg mailbox "$MAILBOX" \
+    --argjson starting_cursor "$CURSOR" '
+    (.room | type) == "string"
+    and .room == $mailbox
+    and (.count | type) == "number"
+    and (.count | floor) == .count
+    and .count >= 0
+    and .count == (.messages | length)
+    and (
         .first_seq == null
         or (
             (.first_seq | type) == "number"
@@ -151,6 +164,25 @@ if ! jq -e '
             )
         )
     )
+    and all(.messages[]; .seq > $starting_cursor)
+    and (
+        [.messages[].seq]
+        == ([.messages[].seq] | sort)
+    )
+    and (
+        ([.messages[].seq] | unique | length)
+        == (.messages | length)
+    )
+    and (
+        if (.messages | length) == 0
+        then .first_seq == null
+        else (
+            .first_seq == .messages[0].seq
+            and .last_seq >= .messages[-1].seq
+        )
+        end
+    )
+    and .last_seq >= $starting_cursor
 ' "$TMP_FILE" >/dev/null 2>&1; then
     echo "ERROR: Technocore returned invalid mailbox data" >&2
     echo "Cursor unchanged: $CURSOR" >&2

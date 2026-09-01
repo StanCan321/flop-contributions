@@ -69,6 +69,37 @@ fi
 
 pass "invalid cursor rejected after assignment"
 
+printf '%s\n' \
+  'INVALID/MAILBOX' \
+  >"$TEST_HOME/flop/mailbox.txt"
+
+printf '%s\n' 0 >"$TEST_HOME/flop/mailbox.cursor"
+
+set +e
+
+HOME="$TEST_HOME" \
+  "$POLL_SCRIPT" \
+  >"$TEST_HOME/stdout" \
+  2>"$TEST_HOME/stderr"
+
+STATUS=$?
+
+set -e
+
+[ "$STATUS" -eq 1 ] ||
+    fail "invalid mailbox name returned unexpected status $STATUS"
+
+grep -Fq \
+  'ERROR: invalid mailbox name' \
+  "$TEST_HOME/stderr" ||
+    fail "invalid mailbox name error was not reported"
+
+pass "invalid mailbox name rejected before network access"
+
+printf '%s\n' \
+  'test-mailbox' \
+  >"$TEST_HOME/flop/mailbox.txt"
+
 MOCK_BIN="$TEST_HOME/bin"
 MOCK_RESPONSE="$TEST_HOME/response.json"
 mkdir -p "$MOCK_BIN"
@@ -101,6 +132,38 @@ MOCK
 
 chmod 700 "$MOCK_BIN/curl"
 printf '%s\n' 7 >"$TEST_HOME/flop/mailbox.cursor"
+
+jq -n '{
+    room: "wrong-mailbox",
+    count: 0,
+    first_seq: null,
+    last_seq: 7,
+    messages: []
+}' >"$MOCK_RESPONSE"
+
+set +e
+
+HOME="$TEST_HOME" \
+PATH="$MOCK_BIN:$PATH" \
+MOCK_RESPONSE="$MOCK_RESPONSE" \
+  "$POLL_SCRIPT" \
+  >"$TEST_HOME/stdout" \
+  2>"$TEST_HOME/stderr"
+
+STATUS=$?
+
+set -e
+
+[ "$STATUS" -eq 1 ] ||
+    fail "wrong-room response returned unexpected status $STATUS"
+
+[ "$(<"$TEST_HOME/flop/mailbox.cursor")" = "7" ] ||
+    fail "wrong-room response changed cursor state"
+
+[ ! -e "$TEST_HOME/flop/mailbox.pending" ] ||
+    fail "wrong-room response created a pending acknowledgement"
+
+pass "wrong-room response rejected without state change"
 
 jq -n '{
     room: "test-mailbox",
