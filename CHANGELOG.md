@@ -12,7 +12,9 @@ All notable changes to this project are documented in this file.
   activity, private data, and unattended-operation boundaries;
 - added a compromised-identity containment and replacement runbook; and
 - recorded a fail-closed live availability check and three upstream security
-  reviews without retaining private message data.
+  reviews without retaining private message data;
+- recorded a single failed signed public-message attempt by hash, status, and
+  reserved nonce without retaining its body or signature.
 
 ## 0.2.1 — 2026-09-01
 
