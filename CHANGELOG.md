@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## 0.2.0 — 2026-09-01
+
+Manual trusted-consumption release.
+
+### Added
+
+- a fail-closed, manually invoked mailbox review workflow;
+- strict saved-batch schema, ownership, permission, sequence, and generation checks;
+- independent Ed25519 verification of every retained message signature;
+- explicit operator confirmation before transactional acknowledgement;
+- redacted review receipts without message bodies, DIDs, signatures, or capabilities;
+- same-generation signature replay detection against archived receipts; and
+- offline regression coverage on Ubuntu 22.04, Ubuntu 24.04, and native ARM64.
+
+### Safety boundary
+
+- messages are treated as untrusted data and are never executed;
+- URLs are counted for review but are never opened automatically;
+- polling and acknowledgement remain separate manual actions;
+- unattended consumption and automatic replies remain deliberately excluded; and
+- this release makes no claim of FLOP affiliation, eligibility, allocation, or reward.
+
 ## 0.1.1 — 2026-09-01
 
 Portability and governance maintenance release.
