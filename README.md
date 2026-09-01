@@ -46,6 +46,19 @@ identity, official project status, or the truthworthiness of message content.
 - Independent signed-message verification
 - Failure and recovery tests
 
+## Local safety tests
+
+Run the network-free sender checks:
+
+```bash
+./tests/test-sender-static.sh
+```
+
+These checks validate Bash syntax, signed POST transport, monotonic nonce
+controls, redacted logging, and the absence of embedded identity material.
+
+The test does not load `SIGN_SEED`, contact Technocore, or transmit a message.
+
 ## License and attribution
 
 This contribution is licensed under Apache License 2.0.
