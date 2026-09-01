@@ -78,6 +78,11 @@ while [ "$ATTEMPT" -le "$MAX_ATTEMPTS" ]; do
             exit 3
             ;;
 
+        4)
+            echo "Mailbox generation changed; automatic retry stopped" >&2
+            exit 4
+            ;;
+
         76)
             echo "An unacknowledged batch is pending; automatic retry stopped" >&2
             exit 76

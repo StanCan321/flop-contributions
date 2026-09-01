@@ -16,7 +16,22 @@ exec 9>"$LOCK_FILE"
 flock -x 9
 
 TMP_FILE="$(mktemp)"
-trap 'rm -f "$TMP_FILE"' EXIT
+TMP_PENDING=""
+TMP_CURSOR=""
+
+cleanup() {
+    rm -f "$TMP_FILE"
+
+    if [ -n "$TMP_PENDING" ]; then
+        rm -f "$TMP_PENDING"
+    fi
+
+    if [ -n "$TMP_CURSOR" ]; then
+        rm -f "$TMP_CURSOR"
+    fi
+}
+
+trap cleanup EXIT
 
 if [ ! -s "$MAILBOX_FILE" ]; then
     echo "ERROR: mailbox file missing or empty" >&2
@@ -32,8 +47,35 @@ if [ -e "$PENDING_FILE" ]; then
     exit 76
 fi
 
+STORED_GENERATION=null
+
 if [ -s "$CURSOR_FILE" ]; then
-    CURSOR="$(<"$CURSOR_FILE")"
+    CURSOR_STATE="$(<"$CURSOR_FILE")"
+
+    if [[ "$CURSOR_STATE" =~ ^[0-9]{1,16}$ ]]; then
+        # Legacy cursor-only state; migrate after a successful acknowledgement.
+        CURSOR="$CURSOR_STATE"
+    elif jq -e '
+        (.cursor | type) == "number"
+        and (.cursor | floor) == .cursor
+        and .cursor >= 0
+        and .cursor <= 9007199254740991
+        and (
+            .generation == null
+            or (
+                (.generation | type) == "number"
+                and (.generation | floor) == .generation
+                and .generation >= 0
+                and .generation <= 9007199254740991
+            )
+        )
+    ' <<<"$CURSOR_STATE" >/dev/null 2>&1; then
+        CURSOR="$(jq -r '.cursor' <<<"$CURSOR_STATE")"
+        STORED_GENERATION="$(jq -r '.generation // "null"' <<<"$CURSOR_STATE")"
+    else
+        echo "ERROR: invalid cursor state" >&2
+        exit 1
+    fi
 else
     CURSOR=0
 fi
@@ -78,6 +120,15 @@ if ! jq -e '
     and (.last_seq | floor) == .last_seq
     and .last_seq >= 0
     and .last_seq <= 9007199254740991
+    and (
+        (has("generation") | not)
+        or (
+            (.generation | type) == "number"
+            and (.generation | floor) == .generation
+            and .generation >= 0
+            and .generation <= 9007199254740991
+        )
+    )
     and (.messages | type) == "array"
     and (
         (has("wait_held") | not)
@@ -106,6 +157,7 @@ if ! jq -e '
     exit 1
 fi
 
+FIRST_SEQ_JSON="$(jq -c '.first_seq' "$TMP_FILE")"
 FIRST_SEQ="$(jq -r '.first_seq // 0' "$TMP_FILE")"
 LAST_SEQ="$(jq -r '.last_seq' "$TMP_FILE")"
 
@@ -122,6 +174,45 @@ if [ "$WAIT_HELD" = "false" ]; then
     echo "Technocore long-poll slot was not held; backoff required" >&2
     echo "Cursor unchanged: $CURSOR" >&2
     exit 75
+fi
+
+RESPONSE_GENERATION="$(
+    jq -r '
+        if has("generation")
+        then .generation
+        else "null"
+        end
+    ' "$TMP_FILE"
+)"
+
+if [ "$STORED_GENERATION" != "null" ] \
+   && [ "$RESPONSE_GENERATION" != "null" ] \
+   && [ "$STORED_GENERATION" -ne "$RESPONSE_GENERATION" ]; then
+
+    jq -n \
+        --argjson starting_cursor "$CURSOR" \
+        --argjson stored_generation "$STORED_GENERATION" \
+        --argjson response_generation "$RESPONSE_GENERATION" \
+        --argjson first_seq "$FIRST_SEQ_JSON" \
+        --argjson last_seq "$LAST_SEQ" \
+        '{
+            status: "generation_changed",
+            starting_cursor: $starting_cursor,
+            stored_generation: $stored_generation,
+            response_generation: $response_generation,
+            first_seq: $first_seq,
+            last_seq: $last_seq,
+            cursor_updated: false
+        }'
+
+    echo "WARNING: mailbox generation changed; cursor not advanced" >&2
+    exit 4
+fi
+
+if [ "$RESPONSE_GENERATION" != "null" ]; then
+    EFFECTIVE_GENERATION="$RESPONSE_GENERATION"
+else
+    EFFECTIVE_GENERATION="$STORED_GENERATION"
 fi
 
 if [ "$CURSOR" -gt 0 ] \
@@ -151,9 +242,11 @@ if [ "$CURSOR" -gt 0 ] \
 fi
 
 jq \
-    --argjson starting_cursor "$CURSOR" '
+    --argjson starting_cursor "$CURSOR" \
+    --argjson generation "$EFFECTIVE_GENERATION" '
     {
         status: "ok",
+        generation: $generation,
         starting_cursor: $starting_cursor,
         proposed_cursor: .last_seq,
         count: (.messages | length),
@@ -183,11 +276,30 @@ jq \
 if [ "$LAST_SEQ" -gt "$CURSOR" ]; then
     TMP_PENDING="$(mktemp "$STATE_DIR/.mailbox.pending.XXXXXX")"
 
-    printf '%s\n' "$LAST_SEQ" >"$TMP_PENDING"
+    jq -cn \
+        --argjson generation "$EFFECTIVE_GENERATION" \
+        --argjson cursor "$LAST_SEQ" \
+        '{generation: $generation, cursor: $cursor}' \
+        >"$TMP_PENDING"
     chmod 600 "$TMP_PENDING"
     mv -f "$TMP_PENDING" "$PENDING_FILE"
+    TMP_PENDING=""
 
     echo "Pending acknowledgement recorded: $LAST_SEQ" >&2
+elif [ "$STORED_GENERATION" = "null" ] \
+     && [ "$EFFECTIVE_GENERATION" != "null" ]; then
+    TMP_CURSOR="$(mktemp "$STATE_DIR/.mailbox.cursor.XXXXXX")"
+
+    jq -cn \
+        --argjson generation "$EFFECTIVE_GENERATION" \
+        --argjson cursor "$CURSOR" \
+        '{generation: $generation, cursor: $cursor}' \
+        >"$TMP_CURSOR"
+    chmod 600 "$TMP_CURSOR"
+    mv -f "$TMP_CURSOR" "$CURSOR_FILE"
+    TMP_CURSOR=""
+
+    echo "Mailbox generation recorded: $EFFECTIVE_GENERATION" >&2
 fi
 
 echo "Cursor unchanged pending acknowledgement: $CURSOR" >&2

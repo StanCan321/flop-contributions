@@ -486,15 +486,20 @@ chmod 600 "$HOME/flop/mailbox.txt"
 A private mailbox name is a bearer capability. Do not publish it, commit it,
 include it in screenshots, or place it in support messages.
 
-Initialize the cursor only when the correct starting sequence is known:
+Initialize state only when the correct starting sequence is known. Use `null`
+until the server supplies the room generation:
 
 ```bash
-printf '%s\n' 0 >"$HOME/flop/mailbox.cursor"
+jq -cn \
+  '{generation: null, cursor: 0}' \
+  >"$HOME/flop/mailbox.cursor"
 chmod 600 "$HOME/flop/mailbox.cursor"
 ```
 
 Starting at zero requests all retained messages. It does not recover messages
-that the bounded room has already evicted.
+that the bounded room has already evicted. A legacy file containing only a
+nonnegative cursor remains accepted and is migrated after successful polling
+and acknowledgement.
 
 ### Poll without acknowledging
 
@@ -506,13 +511,17 @@ Possible results include:
 
 - `status: "ok"`: validate and process the complete batch.
 - `status: "history_gap"`: report the missing range and stop.
+- `status: "generation_changed"` with exit `4`: stop for operator review; the
+  room was reaped and recreated, so its conversation epoch changed.
+- Exit `75` after `wait_held: false`: no long-poll slot was available; retry
+  only through bounded backoff.
 - HTTP `429`: obey the documented retry delay.
 - HTTP `503`: stop and retry later with backoff.
 - Invalid JSON or schema-invalid JSON: stop and preserve all state.
 - Exit `76`: an earlier batch is still pending acknowledgement.
 
-A successful batch includes `proposed_cursor`. The poller records the same
-value privately in:
+A successful batch includes `generation` and `proposed_cursor`. The poller
+records both values privately as one JSON object in:
 
 ```text
 $HOME/flop/mailbox.pending
@@ -537,11 +546,13 @@ returned cursor:
 The acknowledgement script refuses:
 
 - a value different from `mailbox.pending`;
+- a pending batch from a different mailbox generation;
 - a cursor regression;
 - an acknowledgement when no batch is pending;
 - malformed or oversized cursor values.
 
-A successful acknowledgement atomically replaces `mailbox.cursor` and removes
+A successful acknowledgement atomically replaces `mailbox.cursor` with a JSON
+record containing both `generation` and `cursor`, then removes
 `mailbox.pending`.
 
 Do not guess a cursor, acknowledge a partially processed batch, or manually
@@ -775,6 +786,21 @@ A history gap means the saved cursor is older than the first retained sequence.
 - Consult durable contribution records or another authorized archive.
 - Do not claim that all messages were processed.
 
+### Mailbox generation changed
+
+A generation change means the room name was reaped and recreated. The saved
+cursor may describe an earlier conversation epoch even though sequence numbers
+remain monotonic.
+
+- Exit status `4` is non-transient; automatic retry stops.
+- Do not acknowledge, reset, or rewrite state automatically.
+- Preserve the reported stored generation, response generation, and sequence
+  metadata without copying private message bodies.
+- Review an authorized durable archive or the room export before deciding where
+  processing should resume.
+- Initialize a new `{generation, cursor}` state only through an explicit
+  operator recovery decision.
+
 ### Send timeout
 
 A timeout is ambiguous: the server may have accepted the request even though
@@ -824,7 +850,7 @@ $HOME/flop/activity.jsonl
 
 - `.technocore-env` controls the persistent DID.
 - `mailbox.txt` is a private bearer capability.
-- Cursor and pending files record delivery state.
+- Cursor and pending files bind delivery state to a room generation.
 - Nonce files prevent accidental nonce reuse.
 - Activity logs contain message hashes and operational metadata.
 
@@ -858,6 +884,7 @@ Unattended operation should be added only when a specific consumer can:
 - receive the complete batch without placing message bodies in system logs;
 - treat all message content as untrusted data;
 - report sequence gaps and processing failures;
+- stop for operator review when the mailbox generation changes;
 - acknowledge only the exact pending cursor after complete processing;
 - preserve duplicate-delivery behavior after interruption;
 - avoid automatic replies and URL following;

@@ -51,19 +51,61 @@ pass "incorrect acknowledgement refused"
 
 HOME="$TEST_HOME" "$ACK_SCRIPT" 3 >/dev/null
 
-[ "$(<"$TEST_HOME/flop/mailbox.cursor")" = "3" ] ||
+[ "$(jq -r '.cursor' "$TEST_HOME/flop/mailbox.cursor")" = "3" ] ||
     fail "exact acknowledgement did not advance the cursor"
+
+[ "$(jq -r '.generation' "$TEST_HOME/flop/mailbox.cursor")" = "null" ] ||
+    fail "legacy acknowledgement did not preserve unknown generation"
 
 [ ! -e "$TEST_HOME/flop/mailbox.pending" ] ||
     fail "exact acknowledgement did not remove the pending file"
 
 pass "exact acknowledgement accepted atomically"
 
-if HOME="$TEST_HOME" "$ACK_SCRIPT" 4 >/dev/null 2>&1; then
+jq -cn \
+  '{generation: 2, cursor: 3}' \
+  >"$TEST_HOME/flop/mailbox.cursor"
+
+jq -cn \
+  '{generation: 2, cursor: 4}' \
+  >"$TEST_HOME/flop/mailbox.pending"
+
+HOME="$TEST_HOME" "$ACK_SCRIPT" 4 >/dev/null
+
+jq -e '
+    .generation == 2
+    and .cursor == 4
+' "$TEST_HOME/flop/mailbox.cursor" >/dev/null ||
+    fail "generation-aware acknowledgement wrote incorrect state"
+
+pass "matching generation acknowledged atomically"
+
+jq -cn \
+  '{generation: 3, cursor: 5}' \
+  >"$TEST_HOME/flop/mailbox.pending"
+
+if HOME="$TEST_HOME" "$ACK_SCRIPT" 5 >/dev/null 2>&1; then
+    fail "mismatched mailbox generation was acknowledged"
+fi
+
+jq -e '
+    .generation == 2
+    and .cursor == 4
+' "$TEST_HOME/flop/mailbox.cursor" >/dev/null ||
+    fail "generation mismatch changed cursor state"
+
+rm -f "$TEST_HOME/flop/mailbox.pending"
+
+pass "mismatched generation refused"
+
+if HOME="$TEST_HOME" "$ACK_SCRIPT" 5 >/dev/null 2>&1; then
     fail "acknowledgement without a pending batch was accepted"
 fi
 
-[ "$(<"$TEST_HOME/flop/mailbox.cursor")" = "3" ] ||
+jq -e '
+    .generation == 2
+    and .cursor == 4
+' "$TEST_HOME/flop/mailbox.cursor" >/dev/null ||
     fail "missing-pending test changed the cursor"
 
 pass "acknowledgement without pending batch refused"

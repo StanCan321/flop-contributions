@@ -163,6 +163,66 @@ grep -Fq \
 
 pass "refused long poll requests bounded backoff"
 
+jq -n '{
+    room: "test-mailbox",
+    count: 0,
+    first_seq: null,
+    last_seq: 7,
+    generation: 2,
+    messages: [],
+    wait_held: true
+}' >"$MOCK_RESPONSE"
+
+HOME="$TEST_HOME" \
+PATH="$MOCK_BIN:$PATH" \
+MOCK_RESPONSE="$MOCK_RESPONSE" \
+  "$POLL_SCRIPT" >/dev/null 2>"$TEST_HOME/stderr"
+
+jq -e '
+    .generation == 2
+    and .cursor == 7
+' "$TEST_HOME/flop/mailbox.cursor" >/dev/null ||
+    fail "first observed generation was not recorded"
+
+pass "first observed generation recorded without cursor movement"
+
+jq -n '{
+    room: "test-mailbox",
+    count: 0,
+    first_seq: null,
+    last_seq: 7,
+    generation: 3,
+    messages: [],
+    wait_held: true
+}' >"$MOCK_RESPONSE"
+
+set +e
+
+HOME="$TEST_HOME" \
+PATH="$MOCK_BIN:$PATH" \
+MOCK_RESPONSE="$MOCK_RESPONSE" \
+  "$POLL_SCRIPT" \
+  >"$TEST_HOME/stdout" \
+  2>"$TEST_HOME/stderr"
+
+STATUS=$?
+
+set -e
+
+[ "$STATUS" -eq 4 ] ||
+    fail "generation change returned unexpected status $STATUS"
+
+jq -e '
+    .generation == 2
+    and .cursor == 7
+' "$TEST_HOME/flop/mailbox.cursor" >/dev/null ||
+    fail "generation change modified stored cursor state"
+
+[ ! -e "$TEST_HOME/flop/mailbox.pending" ] ||
+    fail "generation change created a pending acknowledgement"
+
+pass "mailbox generation change stopped cursor advancement"
+
 SIGNATURE="$(printf 'A%.0s' {1..86})"
 
 jq -n \
@@ -171,6 +231,7 @@ jq -n \
     count: 1,
     first_seq: 8,
     last_seq: 8,
+    generation: 2,
     messages: [
         {
             seq: 8,
@@ -193,7 +254,10 @@ OUTPUT="$(
 [ "$(jq -r '.messages[0].sig' <<<"$OUTPUT")" = "$SIGNATURE" ] ||
     fail "retained signature was dropped or changed"
 
-[ "$(<"$TEST_HOME/flop/mailbox.pending")" = "8" ] ||
+jq -e '
+    .generation == 2
+    and .cursor == 8
+' "$TEST_HOME/flop/mailbox.pending" >/dev/null ||
     fail "signed-message fixture did not record its pending cursor"
 
 pass "retained signature preserved in poll output"

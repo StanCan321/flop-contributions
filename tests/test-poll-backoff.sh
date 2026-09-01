@@ -103,4 +103,30 @@ set -e
 
 pass "pending batch stopped automatic retry"
 
+GENERATION_POLLER="$TEST_DIR/generation-poller"
+
+printf '%s\n' \
+  '#!/usr/bin/env bash' \
+  'exit 4' \
+  >"$GENERATION_POLLER"
+
+chmod 700 "$GENERATION_POLLER"
+
+set +e
+
+POLL_SCRIPT="$GENERATION_POLLER" \
+MAX_ATTEMPTS=3 \
+INITIAL_DELAY=1 \
+MAX_DELAY=1 \
+  "$BACKOFF_SCRIPT" >/dev/null 2>&1
+
+STATUS=$?
+
+set -e
+
+[ "$STATUS" -eq 4 ] ||
+    fail "generation change returned unexpected status $STATUS"
+
+pass "generation change stopped automatic retry"
+
 echo "All polling-backoff checks passed."

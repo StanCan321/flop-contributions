@@ -31,10 +31,29 @@ if [ ! -s "$PENDING_FILE" ]; then
     exit 1
 fi
 
-PENDING_CURSOR="$(<"$PENDING_FILE")"
+PENDING_STATE="$(<"$PENDING_FILE")"
+PENDING_GENERATION=null
 
-if [[ ! "$PENDING_CURSOR" =~ ^[0-9]{1,16}$ ]] ||
-   [ "$PENDING_CURSOR" -gt 9007199254740991 ]; then
+if [[ "$PENDING_STATE" =~ ^[0-9]{1,16}$ ]]; then
+    PENDING_CURSOR="$PENDING_STATE"
+elif jq -e '
+    (.cursor | type) == "number"
+    and (.cursor | floor) == .cursor
+    and .cursor >= 0
+    and .cursor <= 9007199254740991
+    and (
+        .generation == null
+        or (
+            (.generation | type) == "number"
+            and (.generation | floor) == .generation
+            and .generation >= 0
+            and .generation <= 9007199254740991
+        )
+    )
+' <<<"$PENDING_STATE" >/dev/null 2>&1; then
+    PENDING_CURSOR="$(jq -r '.cursor' <<<"$PENDING_STATE")"
+    PENDING_GENERATION="$(jq -r '.generation // "null"' <<<"$PENDING_STATE")"
+else
     echo "ERROR: pending acknowledgement file is invalid" >&2
     exit 1
 fi
@@ -46,8 +65,34 @@ if [ "$NEW_CURSOR" -ne "$PENDING_CURSOR" ]; then
     exit 1
 fi
 
+CURRENT_GENERATION=null
+
 if [ -s "$CURSOR_FILE" ]; then
-    CURRENT="$(<"$CURSOR_FILE")"
+    CURRENT_STATE="$(<"$CURSOR_FILE")"
+
+    if [[ "$CURRENT_STATE" =~ ^[0-9]{1,16}$ ]]; then
+        CURRENT="$CURRENT_STATE"
+    elif jq -e '
+        (.cursor | type) == "number"
+        and (.cursor | floor) == .cursor
+        and .cursor >= 0
+        and .cursor <= 9007199254740991
+        and (
+            .generation == null
+            or (
+                (.generation | type) == "number"
+                and (.generation | floor) == .generation
+                and .generation >= 0
+                and .generation <= 9007199254740991
+            )
+        )
+    ' <<<"$CURRENT_STATE" >/dev/null 2>&1; then
+        CURRENT="$(jq -r '.cursor' <<<"$CURRENT_STATE")"
+        CURRENT_GENERATION="$(jq -r '.generation // "null"' <<<"$CURRENT_STATE")"
+    else
+        echo "ERROR: stored cursor state is invalid" >&2
+        exit 1
+    fi
 else
     CURRENT=0
 fi
@@ -62,18 +107,36 @@ if [ "$NEW_CURSOR" -lt "$CURRENT" ]; then
     exit 1
 fi
 
-if [ "$NEW_CURSOR" -eq "$CURRENT" ]; then
-    echo "Cursor unchanged: $CURRENT"
-    exit 0
+if [ "$CURRENT_GENERATION" != "null" ] \
+   && [ "$PENDING_GENERATION" != "null" ] \
+   && [ "$CURRENT_GENERATION" -ne "$PENDING_GENERATION" ]; then
+    echo "ERROR: pending batch belongs to a different mailbox generation" >&2
+    echo "Current generation: $CURRENT_GENERATION" >&2
+    echo "Pending generation: $PENDING_GENERATION" >&2
+    exit 1
+fi
+
+if [ "$PENDING_GENERATION" != "null" ]; then
+    EFFECTIVE_GENERATION="$PENDING_GENERATION"
+else
+    EFFECTIVE_GENERATION="$CURRENT_GENERATION"
 fi
 
 TMP_CURSOR="$(mktemp "$STATE_DIR/.mailbox.cursor.XXXXXX")"
 trap 'rm -f "$TMP_CURSOR"' EXIT
 
-printf '%s\n' "$NEW_CURSOR" >"$TMP_CURSOR"
+jq -cn \
+    --argjson generation "$EFFECTIVE_GENERATION" \
+    --argjson cursor "$NEW_CURSOR" \
+    '{generation: $generation, cursor: $cursor}' \
+    >"$TMP_CURSOR"
 chmod 600 "$TMP_CURSOR"
 mv -f "$TMP_CURSOR" "$CURSOR_FILE"
 rm -f "$PENDING_FILE"
 trap - EXIT
 
-echo "Cursor acknowledged: $CURRENT -> $NEW_CURSOR"
+if [ "$NEW_CURSOR" -eq "$CURRENT" ]; then
+    echo "Cursor unchanged and pending batch cleared: $CURRENT"
+else
+    echo "Cursor acknowledged: $CURRENT -> $NEW_CURSOR"
+fi

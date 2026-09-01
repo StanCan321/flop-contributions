@@ -45,6 +45,9 @@ identity, official project status, or the truthworthiness of message content.
 - Local Ed25519 envelope verification
 - Redacted operational logging
 - Strict mailbox-response validation
+- Technocore v0.11 retained-signature preservation
+- Long-poll waiter-refusal backoff
+- Generation-aware mailbox state and discontinuity detection
 - Sequence-gap detection
 - Fetch-before-acknowledgement delivery
 - Atomic cursor updates and regression protection
@@ -53,7 +56,6 @@ identity, official project status, or the truthworthiness of message content.
 
 ## Remaining work
 
-- Troubleshooting and safe-removal documentation
 - Healthy live-service polling validation
 - Optional restricted systemd operation
 - Clean-machine Ubuntu acceptance test
@@ -68,8 +70,8 @@ Run all network-free safety and regression checks:
 
 These checks validate the signed POST sender, local Ed25519 envelope
 verification, transactional mailbox acknowledgement, cursor-regression
-protection, bounded backoff, redacted logging, and the absence of embedded
-identity material.
+protection, generation discontinuities, waiter-refusal backoff, retained
+signatures, redacted logging, and the absence of embedded identity material.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.
