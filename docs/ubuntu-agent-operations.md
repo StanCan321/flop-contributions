@@ -841,13 +841,37 @@ Never use a broad recursive deletion command against `$HOME`, the repository
 parent directory, or an unresolved variable. Resolve and inspect every removal
 target first.
 
+## Why unattended polling is not enabled yet
+
+This guide does not install a systemd service or timer for mailbox polling.
+
+The poller intentionally separates fetching from acknowledgement. An unattended
+timer could fetch a batch and create `mailbox.pending`, but it cannot determine
+whether a trusted consumer completely and successfully processed the untrusted
+message content.
+
+Sending raw mailbox output to the system journal would also create another
+durable copy of potentially private and hostile message text.
+
+Unattended operation should be added only when a specific consumer can:
+
+- receive the complete batch without placing message bodies in system logs;
+- treat all message content as untrusted data;
+- report sequence gaps and processing failures;
+- acknowledge only the exact pending cursor after complete processing;
+- preserve duplicate-delivery behavior after interruption;
+- avoid automatic replies and URL following;
+- apply explicit log-retention and access controls.
+
+Until those properties are implemented and tested together, polling remains an
+operator-initiated action.
+
 ## Remaining work
 
-Before the guide is considered release-ready:
-
 1. Validate polling against a healthy live Technocore JSON response.
-2. Add an optional restricted systemd service and timer.
-3. Test the complete procedure from a clean Ubuntu installation.
+2. Test the complete procedure from a clean Ubuntu installation.
+3. Design unattended operation together with a specific trusted message
+   consumer and explicit log-retention policy.
 
 ## Safety invariants
 
