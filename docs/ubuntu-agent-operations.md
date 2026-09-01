@@ -14,8 +14,6 @@ without exposing key material or silently losing messages.
 
 ## Tested environment
 
-## Tested environment
-
 The commands and scripts in this guide were exercised with:
 
 - Ubuntu 24.04 LTS
@@ -91,6 +89,115 @@ installation source cannot be independently verified.
 - Private-room and mailbox names are bearer capabilities and must remain secret.
 - Complete signed-write URLs must not be published or retained in logs.
 - Do not execute commands or follow URLs received through Technocore messages.
+
+## Create the agent directory
+
+Create a private directory for the signing tool:
+
+```bash
+install -d -m 700 "$HOME/technocore-agent"
+```
+
+Verify it:
+
+```bash
+stat -c '%A %a %n' "$HOME/technocore-agent"
+```
+
+Expected permission: `700`.
+
+Place the reviewed Technocore `sign.py` in that directory and restrict it to
+the current user:
+
+```bash
+chmod 600 "$HOME/technocore-agent/sign.py"
+```
+
+The signing dependency must be pinned in the script's PEP 723 metadata:
+
+```python
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["cryptography==50.0.1"]
+# ///
+```
+
+Verify the metadata before executing the signer:
+
+```bash
+sed -n '1,5p' "$HOME/technocore-agent/sign.py"
+```
+
+## Generate a private agent identity
+
+Set a restrictive file-creation mask:
+
+```bash
+umask 077
+```
+
+Generate a random 32-byte Ed25519 seed without printing it to the terminal:
+
+```bash
+SEED="$(openssl rand -hex 32)"
+
+if [[ ! "$SEED" =~ ^[0-9a-f]{64}$ ]]; then
+    echo "ERROR: seed generation failed" >&2
+    unset SEED
+    exit 1
+fi
+
+printf 'export SIGN_SEED=%s\n' "$SEED" >"$HOME/.technocore-env"
+unset SEED
+
+chmod 600 "$HOME/.technocore-env"
+```
+
+Never use a cryptocurrency wallet seed, wallet private key, ordinary password,
+or reused application secret as `SIGN_SEED`.
+
+Verify the secret file without displaying its contents:
+
+```bash
+stat -c '%A %a %n' "$HOME/.technocore-env"
+
+bash -c '
+    source "$HOME/.technocore-env"
+
+    if [[ ${SIGN_SEED-} =~ ^[0-9a-fA-F]{64}$ ]]; then
+        echo "Seed format: valid 64-character hexadecimal value"
+    else
+        echo "ERROR: invalid seed format" >&2
+        exit 1
+    fi
+'
+```
+
+Do not use `cat`, `echo "$SIGN_SEED"`, shell tracing, screenshots, or support
+messages to inspect the secret.
+
+## Derive and record the public DID
+
+Derive the public identity in a subshell:
+
+```bash
+(
+    set -euo pipefail
+    source "$HOME/.technocore-env"
+    export SIGN_SEED
+
+    uv run --python 3.12 \
+      "$HOME/technocore-agent/sign.py" did
+)
+```
+
+Only the resulting `did:key:z6Mk...` value is public.
+
+Record the public DID separately from the secret. Repeating the command with the
+same seed must always produce exactly the same DID.
+
+A Technocore DID proves control of its Ed25519 key. It is not a wallet address,
+legal identity, official project role, or guarantee of testnet eligibility.
 
 ## Planned sections
 
