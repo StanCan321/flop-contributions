@@ -26,6 +26,7 @@ pass() {
 
 VALID_ENVELOPE="$TEST_DIR/valid-envelope.json"
 ALTERED_ENVELOPE="$TEST_DIR/altered-envelope.json"
+NONCANONICAL_ENVELOPE="$TEST_DIR/noncanonical-envelope.json"
 
 uv run \
   --with 'cryptography==50.0.1' \
@@ -89,6 +90,46 @@ grep -Fq \
     fail "valid temporary envelope was rejected"
 
 pass "valid temporary envelope accepted"
+
+CANONICAL_SIGNATURE="$(jq -r '.sig' "$VALID_ENVELOPE")"
+FINAL_CHARACTER="${CANONICAL_SIGNATURE: -1}"
+
+case "$FINAL_CHARACTER" in
+    A) NONCANONICAL_FINAL="B" ;;
+    Q) NONCANONICAL_FINAL="R" ;;
+    g) NONCANONICAL_FINAL="h" ;;
+    w) NONCANONICAL_FINAL="x" ;;
+    *)
+        fail "unexpected canonical signature ending: $FINAL_CHARACTER"
+        ;;
+esac
+
+NONCANONICAL_SIGNATURE="$(
+    printf '%s%s' \
+      "${CANONICAL_SIGNATURE::-1}" \
+      "$NONCANONICAL_FINAL"
+)"
+
+jq \
+  --arg signature "$NONCANONICAL_SIGNATURE" \
+  '.sig = $signature' \
+  "$VALID_ENVELOPE" \
+  >"$NONCANONICAL_ENVELOPE"
+
+set +e
+
+uv run "$VERIFIER" \
+  <"$NONCANONICAL_ENVELOPE" \
+  >/dev/null 2>&1
+
+STATUS=$?
+
+set -e
+
+[ "$STATUS" -eq 1 ] ||
+    fail "noncanonical signature returned unexpected status $STATUS"
+
+pass "noncanonical base64url signature rejected"
 
 jq \
   '.text = "altered after signing"' \

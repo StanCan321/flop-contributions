@@ -106,6 +106,15 @@ def decode_signature(value: str) -> bytes:
     if len(signature) != 64:
         fail("Ed25519 signature must be exactly 64 bytes")
 
+    canonical_encoding = (
+        base64.urlsafe_b64encode(signature)
+        .decode("ascii")
+        .rstrip("=")
+    )
+
+    if canonical_encoding != value:
+        fail("signature is not in canonical unpadded base64url form")
+
     return signature
 
 
