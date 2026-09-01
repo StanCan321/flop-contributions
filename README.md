@@ -58,6 +58,11 @@ report, issue, pull request, or test fixture.
 For the required branch, validation, and pull-request workflow, see
 [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
+If an identity seed may have been exposed, stop using it and follow the
+[`Technocore identity compromise response`](docs/identity-compromise-response.md).
+A `did:key` cannot be centrally revoked, so changing permissions alone is not
+recovery.
+
 ## Current capabilities
 
 - Secure Ubuntu agent-operations tutorial
