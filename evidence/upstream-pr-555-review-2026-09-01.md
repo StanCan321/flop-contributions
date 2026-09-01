@@ -82,6 +82,9 @@ valid attribution does not authorize automatic action.
 
 ## Proposed upstream review
 
+Posted by `StanCan321` at
+<https://github.com/flop-labs/technocore-chat/pull/555#issuecomment-5496736768>.
+
 Tested submitted commit `8994cb9`: the two fixture tests pass, the four valid
 signatures verify, Ruff is clean, and the branch rebases cleanly onto current
 `main` (`dc8accc`), where the full suite passes 634 tests.
