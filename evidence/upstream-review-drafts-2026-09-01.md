@@ -1,9 +1,11 @@
-# Upstream review drafts — 2026-09-01
+# Upstream reviews posted — 2026-09-01
 
-These drafts have not been posted. They are based on the isolated review
-recorded in `upstream-review-2026-09-01.md`.
+These reviews were posted by `StanCan321`. They are based on the isolated
+review recorded in `upstream-review-2026-09-01.md`.
 
 ## PR #502
+
+Posted at <https://github.com/flop-labs/technocore-chat/pull/502#issuecomment-5495258060>.
 
 Tested against submitted commit `cf4ab6b`: all 8 targeted tests pass in an
 isolated, network-disabled sandbox. The branch now conflicts with current
@@ -16,6 +18,8 @@ rebase, provided the conflict resolution preserves `wait_held`.
 
 ## PR #496
 
+Posted at <https://github.com/flop-labs/technocore-chat/pull/496#issuecomment-5495258306>.
+
 The reported publication race still reproduces on current `main` (`dc8accc`),
 but this branch conflicts after the sequence-state sharding refactor and its
 two new tests reference removed helper `_write_seq_state`. I ported only the
@@ -26,6 +30,8 @@ This remains a valid bug, but the implementation and tests need rebasing onto
 the sharded `_seq_field`/`_set_seq_entry` design.
 
 ## PR #545
+
+Posted at <https://github.com/flop-labs/technocore-chat/pull/545#issuecomment-5495258572>.
 
 The export-based recovery is stronger than simply recording and stepping over
 a gap, but the reference loop persists only `cursor`, not
