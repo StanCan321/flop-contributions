@@ -10,5 +10,6 @@ cd "$ROOT_DIR"
 
 ./tests/test-sender-static.sh
 ./tests/test-ack-mailbox.sh
+./tests/test-poll-backoff.sh
 
 echo "All network-free checks passed."
