@@ -17,7 +17,8 @@ All notable changes to this project are documented in this file.
   reserved nonce without retaining its body or signature;
 - added universal SHA-256 locks for the uv bootstrap and complete verifier
   dependency closure, strict hashed installation, and offline-only operational
-  dependency execution.
+  dependency execution; and
+- updated the reviewed, hash-pinned CI bootstrap from uv 0.12.5 to 0.12.7.
 
 ## 0.2.1 — 2026-09-01
 
