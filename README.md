@@ -105,6 +105,17 @@ check runs signed sending, polling, pending-state creation, exact
 acknowledgement, and a follow-up poll against a stateful local service fixture.
 Trusted-consumer tests additionally cover signature refusal, private file
 permissions, redacted receipts, explicit confirmation, and replay detection.
+Installation-verifier tests reject checksum drift, unsafe modes, symbolic
+links, and malformed manifests.
+
+Verify a local installation against the reviewed checksum record:
+
+```bash
+./scripts/verify-installation.sh
+```
+
+This check is local and read-only. Every recorded file must be a regular file
+owned by the current user, have mode `700`, and match its SHA-256 checksum.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.
