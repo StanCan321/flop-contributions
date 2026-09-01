@@ -11,10 +11,13 @@
 mailbox.txt
 mailbox.cursor
 mailbox.pending
+mailbox.batch.json
+mailbox.review.json
 private-room.txt
 private-room.cursor
 activity.jsonl
 nonces/
+reviewed-batches/
 *.lock
 
 # Encrypted backups should remain offline
