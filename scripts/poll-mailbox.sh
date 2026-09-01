@@ -65,21 +65,40 @@ fi
 
 # Validate both JSON syntax and the fields subsequently used as integers.
 if ! jq -e '
-    (.first_seq | type) == "number"
+    (
+        .first_seq == null
+        or (
+            (.first_seq | type) == "number"
+            and (.first_seq | floor) == .first_seq
+            and .first_seq >= 0
+            and .first_seq <= 9007199254740991
+        )
+    )
     and (.last_seq | type) == "number"
-    and (.first_seq | floor) == .first_seq
     and (.last_seq | floor) == .last_seq
-    and .first_seq >= 0
     and .last_seq >= 0
-    and .first_seq <= 9007199254740991
     and .last_seq <= 9007199254740991
     and (.messages | type) == "array"
+    and (
+        (has("wait_held") | not)
+        or (.wait_held | type) == "boolean"
+    )
     and all(
         .messages[];
         (.seq | type) == "number"
         and (.seq | floor) == .seq
         and .seq >= 0
         and .seq <= 9007199254740991
+        and (.from | type) == "string"
+        and (.ts | type) == "string"
+        and (.text | type) == "string"
+        and (
+            (has("sig") | not)
+            or (
+                (.sig | type) == "string"
+                and (.sig | test("^[A-Za-z0-9_-]{85}[AQgw]$"))
+            )
+        )
     )
 ' "$TMP_FILE" >/dev/null 2>&1; then
     echo "ERROR: Technocore returned invalid mailbox data" >&2
@@ -87,8 +106,23 @@ if ! jq -e '
     exit 1
 fi
 
-FIRST_SEQ="$(jq -r '.first_seq' "$TMP_FILE")"
+FIRST_SEQ="$(jq -r '.first_seq // 0' "$TMP_FILE")"
 LAST_SEQ="$(jq -r '.last_seq' "$TMP_FILE")"
+
+WAIT_HELD="$(
+    jq -r '
+        if has("wait_held")
+        then .wait_held
+        else true
+        end
+    ' "$TMP_FILE"
+)"
+
+if [ "$WAIT_HELD" = "false" ]; then
+    echo "Technocore long-poll slot was not held; backoff required" >&2
+    echo "Cursor unchanged: $CURSOR" >&2
+    exit 75
+fi
 
 if [ "$CURSOR" -gt 0 ] \
    && [ "$FIRST_SEQ" -gt 0 ] \
@@ -127,13 +161,21 @@ jq \
         last_seq: .last_seq,
         messages: [
             .messages[] |
-            {
-                seq: .seq,
-                from: .from,
-                ts: .ts,
-                nonce: .nonce,
-                text: .text
-            }
+            (
+                {
+                    seq: .seq,
+                    from: .from,
+                    ts: .ts,
+                    nonce: .nonce,
+                    text: .text
+                }
+                + (
+                    if has("sig")
+                    then {sig: .sig}
+                    else {}
+                    end
+                )
+            )
         ]
     }
 ' "$TMP_FILE"
