@@ -3,7 +3,7 @@
 Public, reproducible technical contributions related to Technocore and
 potential future FLOP testnet participation.
 
-Current reviewed release: [`v0.1.0`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.1.0).
+Current reviewed release: [`v0.1.1`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.1.1).
 See [`CHANGELOG.md`](CHANGELOG.md) for its contents and limitations.
 
 ## Scope
@@ -104,10 +104,10 @@ Technocore, acknowledge the real mailbox, or transmit a message.
 
 GitHub Actions first acquires Python 3.12 and the pinned verifier dependency,
 then runs the same test entry point with uv offline mode enforced on Ubuntu
-22.04 and Ubuntu 24.04. This prevents uv from silently acquiring a runtime or
-dependency during validation; the test fixtures replace Technocore network
-calls with local state. ARM64 remains unclaimed until it is exercised on an
-actual ARM64 runner.
+22.04 x86_64, Ubuntu 24.04 x86_64, and native Ubuntu 24.04 ARM64. Each job
+checks and records `uname -m` before validation. This prevents uv from silently
+acquiring a runtime or dependency during validation; the test fixtures replace
+Technocore network calls with local state.
 
 A read-only live compatibility probe against Technocore v0.11.2 is recorded in
 `evidence/live-compatibility.txt`; no message content is retained.
