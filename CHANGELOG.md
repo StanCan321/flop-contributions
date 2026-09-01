@@ -10,7 +10,9 @@ All notable changes to this project are documented in this file.
 - cancel superseded workflow runs for the same branch or pull request;
 - align repository and ruleset configuration on squash-only merges with
   automatic topic-branch cleanup; and
-- document the protected contribution and validation workflow.
+- document the protected contribution and validation workflow;
+- add fail-closed verification of installed script ownership, modes, file
+  types, and recorded checksums.
 
 ## 0.2.0 — 2026-09-01
 
