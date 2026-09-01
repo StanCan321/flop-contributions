@@ -6,6 +6,7 @@ ROOT_DIR="$(
     pwd
 )"
 
+TEST_UV_CACHE_DIR="${UV_CACHE_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/uv}"
 TEST_HOME="$(mktemp -d)"
 AGENT_DIR="$TEST_HOME/technocore-agent"
 STATE_DIR="$TEST_HOME/flop"
@@ -144,12 +145,14 @@ chmod 600 \
 
 run_review() {
     HOME="$TEST_HOME" \
+    UV_CACHE_DIR="$TEST_UV_CACHE_DIR" \
     MOCK_BATCH="$1" \
       "$AGENT_DIR/review-mailbox.sh"
 }
 
 run_direct_review() {
     HOME="$TEST_HOME" \
+    UV_CACHE_DIR="$TEST_UV_CACHE_DIR" \
       uv run \
         --python 3.12 \
         --with 'cryptography==50.0.1' \
@@ -231,14 +234,16 @@ fi
 [ -f "$STATE_DIR/mailbox.pending" ] || fail "review advanced acknowledgement state"
 pass "valid batch produced a redacted receipt without acknowledgement"
 
-if HOME="$TEST_HOME" "$AGENT_DIR/ack-reviewed-mailbox.sh" >/dev/null 2>&1; then
+if HOME="$TEST_HOME" UV_CACHE_DIR="$TEST_UV_CACHE_DIR" \
+  "$AGENT_DIR/ack-reviewed-mailbox.sh" >/dev/null 2>&1; then
     fail "acknowledgement succeeded without explicit confirmation"
 fi
 
 [ -f "$STATE_DIR/mailbox.pending" ] || fail "missing confirmation changed pending state"
 pass "acknowledgement required explicit operator confirmation"
 
-HOME="$TEST_HOME" "$AGENT_DIR/ack-reviewed-mailbox.sh" --confirm-reviewed \
+HOME="$TEST_HOME" UV_CACHE_DIR="$TEST_UV_CACHE_DIR" \
+  "$AGENT_DIR/ack-reviewed-mailbox.sh" --confirm-reviewed \
   >"$TEST_HOME/ack.stdout"
 
 jq -e '.generation == 4 and .cursor == 1' "$STATE_DIR/mailbox.cursor" >/dev/null ||
