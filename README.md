@@ -66,6 +66,7 @@ identity, official project status, or the truthworthiness of message content.
 - Bounded polling backoff
 - Network-free regression tests
 - Dynamic mocked sender failure-path tests
+- Stateful local send-poll-acknowledge integration harness
 
 ## Deliberately deferred
 
@@ -87,7 +88,9 @@ These checks validate the signed POST sender, local Ed25519 envelope
 verification, transactional mailbox acknowledgement, cursor-regression
 protection, generation discontinuities, waiter-refusal backoff, retained
 signatures, signer/verifier/HTTP failure paths, nonce non-reuse, redacted
-logging, and the absence of embedded identity material.
+logging, and the absence of embedded identity material. The final integration
+check runs signed sending, polling, pending-state creation, exact
+acknowledgement, and a follow-up poll against a stateful local service fixture.
 
 The tests use temporary local state. They do not load `SIGN_SEED`, contact
 Technocore, acknowledge the real mailbox, or transmit a message.

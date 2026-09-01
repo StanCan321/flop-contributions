@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OUTPUT_FILE=""
+WRITE_FORMAT=""
+IS_POST=false
+URL=""
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -o)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        -w)
+            WRITE_FORMAT="$2"
+            shift 2
+            ;;
+        --data-binary)
+            IS_POST=true
+            shift 2
+            ;;
+        -H|--connect-timeout|--max-time|--proto)
+            shift 2
+            ;;
+        --tlsv1.2|-sS)
+            shift
+            ;;
+        https://*)
+            URL="$1"
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
+[[ "$URL" == https://technocore.chat/r/test-room* ]] || exit 97
+
+if [ "$IS_POST" = true ]; then
+    REQUEST="$(mktemp)"
+    UPDATED="$(mktemp)"
+    trap 'rm -f "$REQUEST" "$UPDATED"' EXIT
+
+    tee "$REQUEST" >/dev/null
+
+    jq -e '
+        (.did | type) == "string"
+        and (.sig | type) == "string"
+        and (.nonce | type) == "string"
+        and (.text | type) == "string"
+    ' "$REQUEST" >/dev/null
+
+    jq --slurpfile request "$REQUEST" '
+        .next_seq as $seq
+        | .messages += [($request[0] + {
+            seq: $seq,
+            from: $request[0].did,
+            ts: "2026-09-01T00:00:00Z"
+        } | del(.did))]
+        | .next_seq += 1
+    ' "$MOCK_SERVER_STATE" >"$UPDATED"
+
+    mv -f "$UPDATED" "$MOCK_SERVER_STATE"
+
+    if [ -n "$OUTPUT_FILE" ]; then
+        printf '%s\n' '{"ok":true}' >"$OUTPUT_FILE"
+    fi
+
+    [ -z "$WRITE_FORMAT" ] || printf '%s' 200
+    exit 0
+fi
+
+SINCE=0
+
+if [[ "$URL" =~ since=([0-9]+) ]]; then
+    SINCE="${BASH_REMATCH[1]}"
+fi
+
+RESPONSE="$(mktemp)"
+trap 'rm -f "$RESPONSE"' EXIT
+
+jq --argjson since "$SINCE" '
+    [.messages[] | select(.seq > $since)] as $available
+    | {
+        room: "test-room",
+        generation: .generation,
+        count: ($available | length),
+        first_seq: (
+            if ($available | length) == 0
+            then null
+            else $available[0].seq
+            end
+        ),
+        last_seq: (.next_seq - 1),
+        wait_held: true,
+        messages: $available
+      }
+' "$MOCK_SERVER_STATE" >"$RESPONSE"
+
+if [ -n "$OUTPUT_FILE" ]; then
+    cp "$RESPONSE" "$OUTPUT_FILE"
+else
+    cat "$RESPONSE"
+fi
+
+[ -z "$WRITE_FORMAT" ] || printf '%s' 200

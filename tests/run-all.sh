@@ -14,5 +14,6 @@ cd "$ROOT_DIR"
 ./tests/test-poll-state.sh
 ./tests/test-poll-backoff.sh
 ./tests/test-envelope-verifier.sh
+./tests/test-local-integration.sh
 
 echo "All network-free checks passed."

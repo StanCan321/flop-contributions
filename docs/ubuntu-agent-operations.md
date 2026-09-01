@@ -905,10 +905,13 @@ operator-initiated action.
 1. Design unattended operation together with a specific trusted message
    consumer and explicit log-retention policy.
 
-The manual workflow and network-free tests are complete. A read-only public-room
-compatibility probe against Technocore v0.11.2 also passed without retaining
-message content. Unattended execution remains outside this guide's safety
-boundary.
+The manual workflow and network-free tests are complete. The test suite includes
+a disposable, stateful local-service harness covering the complete signed-send,
+poll, pending-acknowledgement, exact-acknowledgement, and follow-up-poll state
+transition without loading the operational identity or contacting Technocore.
+A read-only public-room compatibility probe against Technocore v0.11.2 also
+passed without retaining message content. Unattended execution remains outside
+this guide's safety boundary.
 
 ## Safety invariants
 

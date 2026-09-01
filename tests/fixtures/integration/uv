@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+[ "$1" = "run" ]
+shift
+
+if [ "${1:-}" = "--python" ]; then
+    shift 2
+fi
+
+if [ "${1:-}" = "sign.py" ]; then
+    printf 'did:key:z6Mk'
+    printf '1%.0s' {1..44}
+    printf '\n'
+    printf 'A%.0s' {1..86}
+    printf '\n'
+else
+    jq -e '
+        (.room | type) == "string"
+        and (.nonce | type) == "string"
+        and (.text | type) == "string"
+    ' >/dev/null
+fi
