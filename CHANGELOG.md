@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## Unreleased
+
+### Changed
+
+- enabled Dependabot alerts and security-update pull requests; and
+- added weekly, review-required GitHub Actions dependency updates.
+
 ## 0.2.1 — 2026-09-01
 
 Integrity and governance maintenance release.
