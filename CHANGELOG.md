@@ -2,17 +2,26 @@
 
 All notable changes to this project are documented in this file.
 
-## Unreleased
+## 0.2.1 — 2026-09-01
+
+Integrity and governance maintenance release.
+
+### Added
+
+- fail-closed verification of installed script ownership, modes, file types,
+  and recorded checksums; and
+- protected contribution, validation, and private-data handling guidance.
 
 ### Changed
 
-- avoid duplicate branch-push and pull-request CI runs; and
-- cancel superseded workflow runs for the same branch or pull request;
-- align repository and ruleset configuration on squash-only merges with
-  automatic topic-branch cleanup; and
-- document the protected contribution and validation workflow;
-- add fail-closed verification of installed script ownership, modes, file
-  types, and recorded checksums.
+- avoided duplicate branch-push and pull-request CI runs;
+- canceled superseded workflow runs for the same branch or pull request; and
+- aligned repository and ruleset configuration on squash-only merges with
+  automatic topic-branch cleanup.
+
+The v0.2.0 manual-consumption safety boundary is unchanged. No unattended
+operation, automatic reply, link opening, or message-driven tool execution is
+enabled by this release.
 
 ## 0.2.0 — 2026-09-01
 

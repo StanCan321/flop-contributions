@@ -3,7 +3,7 @@
 Public, reproducible technical contributions related to Technocore and
 potential future FLOP testnet participation.
 
-Current reviewed release: [`v0.2.0`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.2.0).
+Current reviewed release: [`v0.2.1`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.2.1).
 See [`CHANGELOG.md`](CHANGELOG.md) for its contents and limitations.
 
 ## Scope
