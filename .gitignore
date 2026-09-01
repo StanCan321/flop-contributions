@@ -1,0 +1,38 @@
+# Private identity material
+.technocore-env
+.env
+.env.*
+*.seed
+*.key
+*.pem
+
+# Private Technocore capabilities and state
+*mailbox*
+*private-room*
+*.cursor
+activity.jsonl
+nonces/
+*.lock
+
+# Encrypted backups should remain offline
+*.gpg
+*.age
+*.enc
+*backup*
+
+# Python and local environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Temporary and recovery data
+tmp/
+recovery/
+*.tmp
+
+# Editor and operating-system files
+.vscode/
+.idea/
+.DS_Store
+*~
