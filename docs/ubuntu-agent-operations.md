@@ -14,12 +14,70 @@ without exposing key material or silently losing messages.
 
 ## Tested environment
 
-- Ubuntu: 24.04 LTS
-- Architecture: To be documented
-- Bash: To be documented
-- Python: 3.12
-- Dependency manager: `uv`
-- Required commands: `curl`, `jq`, `flock`, `sha256sum`, `gpg`
+## Tested environment
+
+The commands and scripts in this guide were exercised with:
+
+- Ubuntu 24.04 LTS
+- Linux kernel 7.0.0-30-generic
+- x86_64 architecture
+- Bash 5.2.21
+- Python 3.12.3
+- uv 0.12.5
+- curl 8.5.0
+- jq 1.7
+- util-linux/flock 2.39.3
+- GnuPG 2.4.4
+
+Other Ubuntu releases or architectures may require different package names or
+Python installation steps.
+
+## Install prerequisites
+
+Update Ubuntu's package index:
+
+```bash
+sudo apt update
+```
+
+Install the required distribution packages:
+
+```bash
+sudo apt install --no-install-recommends \
+  ca-certificates \
+  curl \
+  git \
+  gnupg \
+  jq \
+  python3 \
+  python3-venv \
+  util-linux
+```
+
+Verify the required commands:
+
+```bash
+python3 --version
+curl --version | sed -n '1p'
+git --version
+gpg --version | sed -n '1p'
+jq --version
+flock --version | sed -n '1p'
+sha256sum --version | sed -n '1p'
+```
+
+Python 3.12 or newer is required by the signing script used in this guide.
+
+Install `uv` using its official installation instructions, then verify the
+installed executable before continuing:
+
+```bash
+command -v uv
+uv --version
+```
+
+Do not continue if `command -v uv` points to an unexpected location or if the
+installation source cannot be independently verified.
 
 ## Security model
 
