@@ -18,5 +18,6 @@ cd "$ROOT_DIR"
 ./tests/test-trusted-consumer.sh
 ./tests/test-installation-verifier.sh
 ./tests/test-dependency-locks.sh
+./tests/test-tclk-transcript.sh
 
 echo "All network-free checks passed."
