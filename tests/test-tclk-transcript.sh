@@ -116,7 +116,7 @@ for fixture in unsigned tampered-signature did-mismatch unknown noncanonical wro
     pass "$fixture transcript rejected"
 done
 
-if rg -n 'subprocess|requests|urllib|socket|https?://|os\.system|eval\(|exec\(' \
+if grep -En 'subprocess|requests|urllib|socket|https?://|os\.system|eval\(|exec\(' \
   "$ROOT_DIR/scripts/validate-tclk-transcript.py" >/dev/null; then
     fail "validator contains a network or execution primitive"
 fi
