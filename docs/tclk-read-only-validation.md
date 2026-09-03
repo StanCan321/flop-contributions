@@ -45,7 +45,7 @@ exact room whose signatures the batch contains:
 UV_OFFLINE=1 uv run \
   --python 3.12 \
   --with-requirements requirements/verifier.txt \
-  scripts/validate-tclk-transcript.py \
+  "$HOME/technocore-agent/validate-tclk-transcript.py" \
   --room ROOM_NAME \
   "$HOME/flop/mailbox.batch.json"
 ```
