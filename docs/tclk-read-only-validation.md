@@ -106,6 +106,20 @@ Wrapper coverage additionally proves that a mismatched trusted receipt fails
 without replacing earlier evidence and that the wrapper contains no network,
 sender, or acknowledgement path.
 
+The deterministic parser-property suite adds malformed JSON, duplicate keys,
+Unicode edge cases, unknown batch/message/frame fields, unsafe integers,
+invalid timestamps, oversized nonces, and 24 randomized transition orderings:
+
+```bash
+UV_OFFLINE=1 uv run \
+  --python 3.12 \
+  --with-requirements requirements/verifier.txt \
+  tests/test-tclk-parser-properties.py
+```
+
+Every generated case must fail with exit status `1`, a bounded diagnostic, an
+unchanged input file, and no additional state files.
+
 No test contacts Technocore or moves value.
 
 ## Rehearse zero-value settlement locally
@@ -148,3 +162,15 @@ The constants were checked against `flop-labs/tclk` commit
 `c60f109ba26547c6be0795b0eb66a861a96a7d68a36885a28f318e69a1cebb96`.
 They must not be regenerated from this repository's validator: their purpose
 is to catch independent encoding or hashing drift.
+
+To compare the reviewed source commit and vector-file hash with upstream
+`main`, run the networked check manually:
+
+```bash
+./scripts/check-tclk-upstream-drift.sh
+```
+
+The command prints both reviewed and current values and exits nonzero if either
+differs. It never edits the pinned test, documentation, or reviewed constants.
+Drift requires a human review; do not update a commit or hash merely to make
+this command pass.

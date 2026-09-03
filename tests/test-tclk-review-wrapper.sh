@@ -73,7 +73,7 @@ fi
     fail "failed review replaced the earlier report"
 pass "mismatched trusted review receipt failed without replacing evidence"
 
-if rg -n 'curl|send\.sh|ack-mailbox|ack-reviewed|https?://' \
+if grep -En 'curl|send\.sh|ack-mailbox|ack-reviewed|https?://' \
   "$ROOT_DIR/scripts/review-tclk-batch.sh" >/dev/null; then
     fail "wrapper contains a network, sender, or acknowledgement path"
 fi

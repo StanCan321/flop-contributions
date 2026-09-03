@@ -3,7 +3,7 @@
 Public, reproducible technical contributions related to Technocore and
 potential future FLOP testnet participation.
 
-Current reviewed release: [`v0.2.1`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.2.1).
+Current reviewed release: [`v0.3.0`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.3.0).
 See [`CHANGELOG.md`](CHANGELOG.md) for its contents and limitations.
 
 ## Scope
@@ -87,6 +87,8 @@ recovery.
 - Independent, read-only hash-lock `tclk/1` transcript validation
 - Generation-, cursor-, and sequence-bound tclk review reports
 - Manual offline tclk review wrapper gated by a matching trusted receipt
+- Deterministic parser property tests for malformed and reordered transcripts
+- Manual, fail-closed upstream golden-vector drift checking
 
 ## Deliberately deferred
 
@@ -123,6 +125,8 @@ It also verifies that protocol reports are bound to the exact reviewed mailbox
 generation and cursor range and that mismatched receipts cannot replace prior
 private evidence.
 Fixed upstream golden vectors guard cross-implementation wire compatibility.
+A separate manual checker fetches upstream state and reports drift without
+rewriting reviewed constants.
 A zero-value local PaperRail rehearsal covers both claim and refund lifecycles
 without contacting Technocore or a value-bearing settlement rail.
 

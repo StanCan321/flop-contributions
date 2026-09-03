@@ -161,8 +161,11 @@ def require_ms(frame: dict, name: str) -> int:
 def parse_time(value: object) -> int:
     if not isinstance(value, str) or not value.endswith("Z"):
         raise ValueError("transport timestamp must be an ISO-8601 UTC string")
-    parsed = dt.datetime.fromisoformat(value[:-1] + "+00:00")
-    return int(parsed.timestamp() * 1000)
+    try:
+        parsed = dt.datetime.fromisoformat(value[:-1] + "+00:00")
+        return int(parsed.timestamp() * 1000)
+    except (OverflowError, OSError, ValueError) as exc:
+        raise ValueError("transport timestamp must be an ISO-8601 UTC string") from exc
 
 
 def validate_job(value: object) -> None:

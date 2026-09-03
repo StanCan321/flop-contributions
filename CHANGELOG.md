@@ -4,6 +4,10 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+## 0.3.0 — 2026-09-03
+
+Read-only tclk validation and dependency-integrity release.
+
 ### Changed
 
 - enabled Dependabot alerts and security-update pull requests;
@@ -35,7 +39,20 @@ All notable changes to this project are documented in this file.
 - fixed cross-implementation tclk/1 offer, contract, and Unicode-escaping
   vectors checked against upstream commit `1459b78`; and
 - zero-value local PaperRail claim and refund lifecycle rehearsals, including
-  refusal of incorrect secrets and early refunds.
+  refusal of incorrect secrets and early refunds;
+- deterministic adversarial parser properties covering malformed JSON,
+  duplicate keys, Unicode, unknown fields, unsafe numeric values, timestamps,
+  nonces, and randomized transition orderings; and
+- a manual upstream golden-vector drift checker that reports source and content
+  changes but never rewrites reviewed constants.
+
+### Safety boundary
+
+- tclk support remains read-only and hash-lock-only;
+- no value-bearing settlement rail, unattended consumption, automatic reply,
+  URL opening, or message-driven execution is enabled;
+- protocol review never acknowledges a mailbox or sends a message; and
+- upstream drift fails closed and requires human review.
 
 ## 0.2.1 — 2026-09-01
 
