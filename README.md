@@ -84,6 +84,7 @@ recovery.
 - Stateful local send-poll-acknowledge integration harness
 - Fail-closed manual mailbox review with independent signature verification
 - Redacted review receipts and same-generation replay detection
+- Independent, read-only hash-lock `tclk/1` transcript validation
 
 ## Deliberately deferred
 
@@ -113,7 +114,12 @@ permissions, redacted receipts, explicit confirmation, and replay detection.
 Installation-verifier tests reject checksum drift, unsafe modes, symbolic
 links, and malformed manifests. Dependency-lock tests require an exact package
 closure, SHA-256 hashes for every accepted distribution, strict hashed CI
-installation, and offline-only operational execution.
+installation, and offline-only operational execution. The tclk regression
+suite verifies transport signatures, canonical frames, DID binding, state
+transitions, replay refusal, secret checks, redaction, and inert message text.
+
+For the validator's hash-only scope and manual invocation, read
+[`Read-only tclk/1 transcript validation`](docs/tclk-read-only-validation.md).
 
 Prepare the reviewed dependency cache before using the operational scripts:
 

@@ -20,6 +20,15 @@ All notable changes to this project are documented in this file.
   dependency execution; and
 - updated the reviewed, hash-pinned CI bootstrap from uv 0.12.5 to 0.12.7.
 
+### Added
+
+- an independent, read-only validator for signed, canonical hash-lock `tclk/1`
+  transcripts, with redacted output and no posting or settlement capability;
+- adversarial coverage for unsigned and altered envelopes, DID mismatch,
+  malformed frames, illegal transitions, deadlines, replay, transcript
+  truncation, unsupported point locks, and instruction-like message text; and
+- a pinned upstream tclk build-and-test audit at commit `81a8346`.
+
 ## 0.2.1 — 2026-09-01
 
 Integrity and governance maintenance release.
