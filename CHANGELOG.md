@@ -27,7 +27,11 @@ All notable changes to this project are documented in this file.
 - adversarial coverage for unsigned and altered envelopes, DID mismatch,
   malformed frames, illegal transitions, deadlines, replay, transcript
   truncation, unsupported point locks, and instruction-like message text; and
-- a pinned upstream tclk build-and-test audit at commit `81a8346`.
+- a pinned upstream tclk build-and-test audit at commit `81a8346`;
+- fixed cross-implementation tclk/1 offer, contract, and Unicode-escaping
+  vectors checked against upstream commit `1459b78`; and
+- zero-value local PaperRail claim and refund lifecycle rehearsals, including
+  refusal of incorrect secrets and early refunds.
 
 ## 0.2.1 — 2026-09-01
 

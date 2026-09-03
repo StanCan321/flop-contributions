@@ -71,3 +71,44 @@ early refund, wrong-party actions, truncated history, replay, unsupported
 point locks, redacted output, and inert instruction-like text and URLs.
 
 No test contacts Technocore or moves value.
+
+## Rehearse zero-value settlement locally
+
+The local PaperRail test exercises the coordination and settlement predicates
+without a network, blockchain, wallet, or valuable asset:
+
+```bash
+UV_OFFLINE=1 uv run \
+  --python 3.12 \
+  --with-requirements requirements/verifier.txt \
+  tests/test-tclk-paper-rail.py
+```
+
+It performs complete `offer → accept → lock → reveal → receipt` and
+`offer → accept → lock → refund → receipt` lifecycles with temporary Ed25519
+identities. The rail independently refuses an incorrect secret and a refund
+before its deadline. Its redacted validator output contains neither temporary
+identity secrets nor the hash-lock preimage.
+
+This is a local behavioral rehearsal only. It does not demonstrate a working
+FLOP, EVM, x402, or other value-bearing settlement rail.
+
+## Check cross-implementation wire compatibility
+
+The golden-vector test pins the upstream offer line, offer identifier,
+contract identifier, acceptance line, and non-ASCII escaping case as fixed
+constants:
+
+```bash
+UV_OFFLINE=1 uv run \
+  --python 3.12 \
+  --with-requirements requirements/verifier.txt \
+  tests/test-tclk-golden-vectors.py
+```
+
+The constants were checked against `flop-labs/tclk` commit
+`1459b78e3b981bbac67f845784c885b3b1ad85ba`. At review time, the upstream
+`tests/vectors.test.ts` file had SHA-256
+`c60f109ba26547c6be0795b0eb66a861a96a7d68a36885a28f318e69a1cebb96`.
+They must not be regenerated from this repository's validator: their purpose
+is to catch independent encoding or hashing drift.

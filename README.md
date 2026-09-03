@@ -117,6 +117,9 @@ closure, SHA-256 hashes for every accepted distribution, strict hashed CI
 installation, and offline-only operational execution. The tclk regression
 suite verifies transport signatures, canonical frames, DID binding, state
 transitions, replay refusal, secret checks, redaction, and inert message text.
+Fixed upstream golden vectors guard cross-implementation wire compatibility.
+A zero-value local PaperRail rehearsal covers both claim and refund lifecycles
+without contacting Technocore or a value-bearing settlement rail.
 
 For the validator's hash-only scope and manual invocation, read
 [`Read-only tclk/1 transcript validation`](docs/tclk-read-only-validation.md).
