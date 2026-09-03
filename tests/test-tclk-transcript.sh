@@ -8,7 +8,9 @@ trap 'find "$TEST_DIR" -depth -delete' EXIT
 fail() { echo "FAIL: $*" >&2; exit 1; }
 pass() { echo "PASS: $*"; }
 
-python3 - "$TEST_DIR" <<'PY'
+uv run --python 3.12 \
+  --with-requirements "$ROOT_DIR/requirements/verifier.txt" \
+  python - "$TEST_DIR" <<'PY'
 import base64, hashlib, json, sys
 from pathlib import Path
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
