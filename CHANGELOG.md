@@ -22,6 +22,10 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- generation-, cursor-, count-, and sequence-bound tclk validation reports;
+- a manual, offline tclk review wrapper gated by a matching trusted mailbox
+  receipt, with atomic private report replacement and no send or acknowledge
+  path;
 - an independent, read-only validator for signed, canonical hash-lock `tclk/1`
   transcripts, with redacted output and no posting or settlement capability;
 - adversarial coverage for unsigned and altered envelopes, DID mismatch,

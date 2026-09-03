@@ -85,6 +85,8 @@ recovery.
 - Fail-closed manual mailbox review with independent signature verification
 - Redacted review receipts and same-generation replay detection
 - Independent, read-only hash-lock `tclk/1` transcript validation
+- Generation-, cursor-, and sequence-bound tclk review reports
+- Manual offline tclk review wrapper gated by a matching trusted receipt
 
 ## Deliberately deferred
 
@@ -117,6 +119,9 @@ closure, SHA-256 hashes for every accepted distribution, strict hashed CI
 installation, and offline-only operational execution. The tclk regression
 suite verifies transport signatures, canonical frames, DID binding, state
 transitions, replay refusal, secret checks, redaction, and inert message text.
+It also verifies that protocol reports are bound to the exact reviewed mailbox
+generation and cursor range and that mismatched receipts cannot replace prior
+private evidence.
 Fixed upstream golden vectors guard cross-implementation wire compatibility.
 A zero-value local PaperRail rehearsal covers both claim and refund lifecycles
 without contacting Technocore or a value-bearing settlement rail.

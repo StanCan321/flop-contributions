@@ -110,7 +110,12 @@ def lifecycle(refund: bool) -> tuple[dict, LocalPaperRail, str]:
         times += ["2099-12-31T23:53:00Z", "2099-12-31T23:54:00Z"]
 
     messages = [signed_message(i + 1, keys[i], senders[i], frame, times[i]) for i, frame in enumerate(frames)]
-    result = validator.validate_transcript({"messages": messages}, ROOM)
+    batch = {
+        "status": "ok", "generation": 11, "starting_cursor": 0,
+        "proposed_cursor": len(messages), "count": len(messages),
+        "first_seq": 1, "last_seq": len(messages), "messages": messages,
+    }
+    result = validator.validate_transcript(batch, ROOM)
     return result, rail, secret
 
 

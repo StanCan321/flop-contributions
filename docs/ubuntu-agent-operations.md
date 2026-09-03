@@ -639,6 +639,21 @@ included in support material.
 If verification fails, the wrapper exits without acknowledging. It retains the
 saved batch and pending cursor for investigation or safe resumption.
 
+If the reviewed batch contains `tclk/1` frames, perform the separate read-only
+protocol review before acknowledgement:
+
+```bash
+"$HOME/technocore-agent/review-tclk-batch.sh"
+```
+
+This command requires the matching trusted receipt above, obtains the exact
+room from the protected capability file, and uses only the installed hash lock
+in offline mode. It atomically records a private report at
+`$HOME/flop/tclk.review.json` that is bound to the saved batch generation,
+cursor range, count, and sequence range. It does not send, settle, or
+acknowledge anything. Installation, output interpretation, and scope are
+documented in [Read-only tclk/1 transcript validation](tclk-read-only-validation.md).
+
 ### Explicitly acknowledge a reviewed batch
 
 Only after personally reviewing the complete saved batch, run:

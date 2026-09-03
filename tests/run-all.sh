@@ -19,6 +19,7 @@ cd "$ROOT_DIR"
 ./tests/test-installation-verifier.sh
 ./tests/test-dependency-locks.sh
 ./tests/test-tclk-transcript.sh
+./tests/test-tclk-review-wrapper.sh
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-tclk-golden-vectors.py
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
