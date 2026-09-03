@@ -37,6 +37,11 @@ ROOM = re.compile(r"^[a-z0-9][a-z0-9_-]{0,47}$")
 TRANSPORT_NONCE = re.compile(r"^[0-9]{1,19}$")
 SIGNATURE = re.compile(r"^[A-Za-z0-9_-]{86}$")
 B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+BATCH_KEYS = {
+    "status", "generation", "starting_cursor", "proposed_cursor", "count",
+    "first_seq", "last_seq", "messages",
+}
+MESSAGE_KEYS = {"seq", "from", "ts", "nonce", "text", "sig"}
 
 FRAME_KEYS = {
     "offer": (
@@ -328,22 +333,49 @@ class Contract:
 
 
 def validate_transcript(payload: object, room: str) -> dict:
-    if not isinstance(payload, dict) or not isinstance(payload.get("messages"), list):
-        raise ValueError("input must be a saved mailbox batch with a messages array")
+    if not isinstance(payload, dict) or set(payload) != BATCH_KEYS:
+        raise ValueError("input fields do not match the saved mailbox batch schema")
+    if payload["status"] != "ok":
+        raise ValueError("only a status=ok saved mailbox batch can be validated")
+    generation = payload["generation"]
+    starting = payload["starting_cursor"]
+    proposed = payload["proposed_cursor"]
+    count = payload["count"]
+    first_seq = payload["first_seq"]
+    last_seq = payload["last_seq"]
+    messages = payload["messages"]
+    for name, value in (
+        ("generation", generation), ("starting_cursor", starting),
+        ("proposed_cursor", proposed), ("count", count), ("last_seq", last_seq),
+    ):
+        if type(value) is not int or not 0 <= value <= MAX_SAFE_INTEGER:
+            raise ValueError(f"{name} must be a bounded nonnegative integer")
+    if not isinstance(messages, list) or count != len(messages):
+        raise ValueError("count does not match the messages array")
+    if proposed != last_seq or proposed < starting:
+        raise ValueError("proposed cursor and last sequence are inconsistent")
+    if messages:
+        if type(first_seq) is not int or first_seq != messages[0].get("seq"):
+            raise ValueError("first sequence does not match the first message")
+    elif first_seq is not None or proposed != starting:
+        raise ValueError("empty batch cursor fields are inconsistent")
+
     contracts: dict[str, Contract] = {}
     contract_by_id: dict[str, Contract] = {}
     seen_lines: set[str] = set()
     ignored = 0
     accepted = 0
-    previous_seq: int | None = None
+    previous_seq = starting
 
-    for message in payload["messages"]:
-        if not isinstance(message, dict):
-            raise ValueError("transport message must be an object")
+    for index, message in enumerate(messages):
+        if not isinstance(message, dict) or set(message) != MESSAGE_KEYS:
+            raise ValueError("transport message fields do not match the saved-batch schema")
         seq = message.get("seq")
         if type(seq) is not int or not 0 < seq <= MAX_SAFE_INTEGER:
             raise ValueError("transport sequence is malformed")
-        if previous_seq is not None and seq != previous_seq + 1:
+        if seq <= previous_seq or seq > proposed:
+            raise ValueError("transport sequence is outside the batch cursor range")
+        if not (index == 0 and starting == 0) and seq != previous_seq + 1:
             raise ValueError("transport transcript contains a sequence gap or replay")
         previous_seq = seq
         verify_transport(room, message)
@@ -375,10 +407,24 @@ def validate_transcript(payload: object, room: str) -> dict:
             state.apply(frame, now_ms)
         accepted += 1
 
+    if messages and previous_seq != proposed:
+        raise ValueError("last message sequence does not match the proposed cursor")
+
+    binding = {
+        "generation": generation,
+        "starting_cursor": starting,
+        "proposed_cursor": proposed,
+        "count": count,
+        "first_seq": first_seq,
+        "last_seq": last_seq,
+    }
+
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "protocol": "tclk/1",
         "mode": "read_only_hash_lock",
+        **binding,
+        "batch_binding_sha256": redacted_hash(canonical(binding)),
         "accepted_frame_count": accepted,
         "ignored_non_tclk_count": ignored,
         "contracts": [

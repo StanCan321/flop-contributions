@@ -14,6 +14,8 @@ tests, and 31 Worker tests.
 The validator:
 
 - reads one saved Technocore mailbox batch from a regular file;
+- binds its report to the batch generation, starting and proposed cursors,
+  count, and first and last sequence numbers;
 - independently verifies every retained Ed25519 room-message signature;
 - requires the frame `from` DID to equal the transport-verified sender;
 - rejects duplicate JSON keys, unknown fields, noncanonical encoding, invalid
@@ -35,24 +37,54 @@ The output does not prove that funds exist, that work was delivered, or that a
 settlement rail enforced the transcript. Technocore messages coordinate a
 deal; only the selected rail can establish value state.
 
-## Validate a saved batch
+## Validate a trusted-reviewed saved batch
 
 Prepare the reviewed offline dependency cache as described in the main Ubuntu
-guide. Then run the validator manually, replacing the placeholder with the
-exact room whose signatures the batch contains:
+guide. Install the validator and manual wrapper:
 
 ```bash
-UV_OFFLINE=1 uv run \
-  --python 3.12 \
-  --with-requirements requirements/verifier.txt \
-  "$HOME/technocore-agent/validate-tclk-transcript.py" \
-  --room ROOM_NAME \
-  "$HOME/flop/mailbox.batch.json"
+install -m 700 \
+  scripts/validate-tclk-transcript.py \
+  "$HOME/technocore-agent/validate-tclk-transcript.py"
+
+install -m 700 \
+  scripts/review-tclk-batch.sh \
+  "$HOME/technocore-agent/review-tclk-batch.sh"
 ```
 
-The room name is part of every Technocore signing challenge. Supplying a wrong
-room therefore causes signature verification to fail rather than silently
-validating the batch in another context.
+First run the generic trusted mailbox review. It saves the batch and creates a
+redacted receipt only after independently verifying every retained signature:
+
+```bash
+"$HOME/technocore-agent/review-mailbox.sh"
+```
+
+After inspecting that private batch as described in the Ubuntu guide, invoke
+the protocol-specific review manually:
+
+```bash
+"$HOME/technocore-agent/review-tclk-batch.sh"
+```
+
+The wrapper reads the exact room from the protected mailbox capability file;
+it does not accept a room on the command line. It refuses to run unless the
+generic trusted receipt matches the saved batch's generation, starting cursor,
+proposed cursor, and count and says that every signature is valid. It uses only
+the installed hash lock with `UV_OFFLINE=1`, then atomically writes the private
+report with mode `600` to:
+
+```text
+$HOME/flop/tclk.review.json
+```
+
+The report repeats the batch generation, cursor range, count, and first and
+last sequence numbers and includes `batch_binding_sha256`, a deterministic
+digest of those fields. This prevents a report from being mistaken for one
+covering a different mailbox epoch or sequence range.
+
+The room name remains part of every Technocore signing challenge. A batch from
+another room therefore fails signature verification rather than being
+silently accepted in the protected mailbox context.
 
 Do not pipe the output into a sender, settlement client, shell, browser, or
 automatic acknowledgement command. Review remains a read-only, human-invoked
@@ -62,6 +94,7 @@ step.
 
 ```bash
 UV_OFFLINE=1 ./tests/test-tclk-transcript.sh
+UV_OFFLINE=1 ./tests/test-tclk-review-wrapper.sh
 ```
 
 The tests use temporary identities and local fixtures. They cover valid claim
@@ -69,6 +102,9 @@ flow, unsigned and altered envelopes, DID mismatch, unknown fields,
 noncanonical JSON, wrong secrets, reveal before lock, expired acceptance,
 early refund, wrong-party actions, truncated history, replay, unsupported
 point locks, redacted output, and inert instruction-like text and URLs.
+Wrapper coverage additionally proves that a mismatched trusted receipt fails
+without replacing earlier evidence and that the wrapper contains no network,
+sender, or acknowledgement path.
 
 No test contacts Technocore or moves value.
 

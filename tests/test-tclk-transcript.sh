@@ -34,7 +34,13 @@ def msg(seq, sender, frame, ts):
     text=line(frame); nonce=100+seq; key=keys[0] if sender==payer else keys[1]
     sig=base64.urlsafe_b64encode(key.sign(f"{room}|{nonce}|{text}".encode())).decode().rstrip("=")
     return {"seq":seq,"from":sender,"ts":ts,"nonce":nonce,"text":text,"sig":sig}
-def save(name, messages): (root / name).write_text(json.dumps({"messages": messages}))
+def batch(messages, start=0):
+    last=messages[-1]["seq"] if messages else start
+    return {"status":"ok","generation":7,"starting_cursor":start,
+            "proposed_cursor":last,"count":len(messages),
+            "first_seq":messages[0]["seq"] if messages else None,
+            "last_seq":last,"messages":messages}
+def save(name, messages, start=0): (root / name).write_text(json.dumps(batch(messages,start)))
 def resign(m):
     key=keys[0] if m["from"]==payer else keys[1]
     m["sig"]=base64.urlsafe_b64encode(key.sign(f'{room}|{m["nonce"]}|{m["text"]}'.encode())).decode().rstrip("=")
@@ -91,7 +97,11 @@ run_bad() {
 
 run_ok valid.json >"$TEST_DIR/result.json"
 jq -e '.accepted_frame_count == 5 and .ignored_non_tclk_count == 1 and
-       .contracts[0].status == "claimed" and .side_effects == false' \
+       .contracts[0].status == "claimed" and .side_effects == false and
+       .schema_version == 2 and .generation == 7 and
+       .starting_cursor == 0 and .proposed_cursor == 6 and
+       .first_seq == 1 and .last_seq == 6 and
+       (.batch_binding_sha256 | test("^[0-9a-f]{64}$"))' \
   "$TEST_DIR/result.json" >/dev/null || fail "valid transcript summary is incorrect"
 if grep -Fq "0x$(printf '42%.0s' {1..32})" "$TEST_DIR/result.json"; then
     fail "redacted output retained the revealed secret"
