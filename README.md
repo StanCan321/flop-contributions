@@ -5,6 +5,8 @@ potential future FLOP testnet participation.
 
 Current reviewed release: [`v0.4.0`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.4.0).
 See [`CHANGELOG.md`](CHANGELOG.md) for its contents and limitations.
+See the [manual maintenance checklist](docs/maintenance-checklist.md) for
+operational checks and the remaining deployed acceptance test.
 
 ## Scope
 
