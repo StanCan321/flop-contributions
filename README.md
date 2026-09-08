@@ -3,7 +3,7 @@
 Public, reproducible technical contributions related to Technocore and
 potential future FLOP testnet participation.
 
-Current reviewed release: [`v0.3.0`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.3.0).
+Current reviewed release: [`v0.4.0`](https://github.com/StanCan321/flop-contributions/releases/tag/v0.4.0).
 See [`CHANGELOG.md`](CHANGELOG.md) for its contents and limitations.
 
 ## Scope
@@ -93,13 +93,13 @@ recovery.
 - Offline board/deal-room audits with independent capture and generation bindings
 - Privacy-safe Technocore v0.13.0 and hosted tclk MCP compatibility evidence
 
-## Deliberately deferred
+## Restricted background operation
 
-- Optional restricted systemd operation
-
-Unattended polling remains intentionally deferred. The trusted consumer still
-requires an operator to inspect the private saved batch and invoke a separate
-explicit acknowledgement command; message content never authorizes that step.
+An optional [fetch-only user timer](docs/fetch-only-operation.md) saves a private
+batch and pauses for human review. Acknowledgement remains manual; automatic
+replies, execution, and settlement remain outside the authorization boundary.
+Validator deployment still requires the official inputs in the
+[readiness checklist](docs/validator-readiness.md).
 
 ## Local safety tests
 

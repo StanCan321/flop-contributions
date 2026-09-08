@@ -1,0 +1,22 @@
+[Unit]
+Description=Technocore fetch-and-save only (manual acknowledgement)
+ConditionPathExists=!%h/flop/mailbox.fetch.halted
+ConditionPathExists=!%h/flop/mailbox.pending
+ConditionPathExists=!%h/flop/mailbox.batch.json
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 %h/technocore-agent/fetch-mailbox-once.py
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/flop
+InaccessiblePaths=-%h/.technocore-env -%h/.curlrc
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+TimeoutStartSec=60
+LimitFSIZE=16777216
+StandardOutput=journal
+StandardError=null
+

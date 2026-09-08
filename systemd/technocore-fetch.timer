@@ -1,0 +1,12 @@
+[Unit]
+Description=Check for a Technocore batch every five minutes until paused
+
+[Timer]
+OnActiveSec=1min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+AccuracySec=10s
+Unit=technocore-fetch.service
+
+[Install]
+WantedBy=timers.target
