@@ -42,8 +42,9 @@ The current upstream protocol routes offer/accept records through
 validator intentionally accepts only one already trusted-reviewed mailbox
 batch under one room, so it is not a full current cross-room tclk auditor.
 Heartbeat parsing and compatible state guards are covered, but cross-room
-folding remains deferred until both exports can be bound to their independent
-room generations without weakening continuity checks.
+folding is provided by the separate [offline cross-room auditor](tclk-cross-room-audit.md),
+which binds both exports and their independent room generations. The mailbox
+wrapper itself retains its single-room scope.
 
 ## Validate a trusted-reviewed saved batch
 

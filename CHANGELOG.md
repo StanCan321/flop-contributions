@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- a separate offline cross-room hash-lock auditor that verifies board and
+  derived deal-room signatures, binds both captures, enforces sequence and
+  routing checks, and explicitly reports unsigned venue metadata limitations;
+
 - privacy-safe public compatibility evidence for Technocore v0.13.0 and the
   hosted no-custody tclk MCP endpoint;
 - a byte-exact, offline Technocore export verifier with continuity, duplicate
