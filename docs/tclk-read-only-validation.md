@@ -37,6 +37,15 @@ The output does not prove that funds exist, that work was delivered, or that a
 settlement rail enforced the transcript. Technocore messages coordinate a
 deal; only the selected rail can establish value state.
 
+The current upstream protocol routes offer/accept records through
+`tclk-offers` and later records through a derived deal room. This repository's
+validator intentionally accepts only one already trusted-reviewed mailbox
+batch under one room, so it is not a full current cross-room tclk auditor.
+Heartbeat parsing and compatible state guards are covered, but cross-room
+folding is provided by the separate [offline cross-room auditor](tclk-cross-room-audit.md),
+which binds both exports and their independent room generations. The mailbox
+wrapper itself retains its single-room scope.
+
 ## Validate a trusted-reviewed saved batch
 
 Prepare the reviewed offline dependency cache as described in the main Ubuntu
@@ -174,3 +183,7 @@ The command prints both reviewed and current values and exits nonzero if either
 differs. It never edits the pinned test, documentation, or reviewed constants.
 Drift requires a human review; do not update a commit or hash merely to make
 this command pass.
+
+On 2026-09-08 it reported upstream commit `5cc4ab9` while the reviewed vector
+content SHA-256 remained unchanged. That is a review-required source drift,
+not permission to advance the pin automatically.

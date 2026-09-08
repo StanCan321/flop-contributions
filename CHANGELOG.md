@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+### Added
+
+- a separate offline cross-room hash-lock auditor that verifies board and
+  derived deal-room signatures, binds both captures, enforces sequence and
+  routing checks, and explicitly reports unsigned venue metadata limitations;
+
+- privacy-safe public compatibility evidence for Technocore v0.13.0 and the
+  hosted no-custody tclk MCP endpoint;
+- a byte-exact, offline Technocore export verifier with continuity, duplicate
+  key, schema, and retained-signature checks; and
+- a non-operational validator-readiness checklist that requires authoritative
+  release, chain, bootnode, faucet, and enrollment inputs before deployment.
+
+### Changed
+
+- aligned the restricted hash-lock validator with compatible upstream
+  heartbeat, optional rail-reference, late-lock, and receipt-consistency rules;
+  and
+- documented that current tclk cross-room routing is outside the single-room
+  mailbox validator's assurance boundary.
+
 ## 0.3.0 — 2026-09-03
 
 Read-only tclk validation and dependency-integrity release.
