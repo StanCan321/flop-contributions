@@ -4,7 +4,8 @@
 
 | Version | Supported |
 | --- | --- |
-| `0.1.x` | Yes |
+| `0.4.x` | Yes |
+| `0.1.x`–`0.3.x` | Upgrade to the current release |
 | Current `main` branch | Yes, for upcoming fixes |
 | Older untagged commits and copied scripts | No |
 

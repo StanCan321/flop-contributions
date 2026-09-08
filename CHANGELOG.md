@@ -4,8 +4,12 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+## 0.4.0 — 2026-09-08
+
 ### Added
 
+- an explicitly authorized fetch-and-save-only user timer with private batch
+  retention, persistent fail-closed pause, and manual review/acknowledgement;
 - a separate offline cross-room hash-lock auditor that verifies board and
   derived deal-room signatures, binds both captures, enforces sequence and
   routing checks, and explicitly reports unsigned venue metadata limitations;

@@ -1040,11 +1040,12 @@ Unattended operation should be added only when a specific consumer can:
 Until those properties are implemented and tested together, polling remains an
 operator-initiated action.
 
-## Deliberately deferred work
+## Restricted background fetching
 
-1. Define a narrowly authorized downstream action policy, human escalation
-   boundary, and explicit log-retention policy before considering unattended
-   operation.
+The optional [fetch-only timer](fetch-only-operation.md) is authorized only to
+fetch and save one private batch, then pause for human review. Its guide defines
+the manual escalation, retention, and explicit-resume policy. It never reviews,
+acknowledges, replies, executes message content, or settles automatically.
 
 The manual workflow, fail-closed review consumer, and network-free tests are
 complete. The test suite includes a disposable, stateful local-service harness
@@ -1052,8 +1053,8 @@ covering the complete signed-send, poll, review, pending-acknowledgement,
 exact-acknowledgement, and follow-up-poll state transition without loading the
 operational identity or contacting Technocore. A read-only public-room
 compatibility probe against Technocore v0.11.2 also passed without retaining
-message content. Unattended execution remains outside this guide's safety
-boundary.
+message content. Unattended consumption and message-driven execution remain
+outside this guide's safety boundary.
 
 ## Safety invariants
 
