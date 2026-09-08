@@ -89,6 +89,8 @@ recovery.
 - Manual offline tclk review wrapper gated by a matching trusted receipt
 - Deterministic parser property tests for malformed and reordered transcripts
 - Manual, fail-closed upstream golden-vector drift checking
+- Byte-exact, offline Technocore export verification
+- Privacy-safe Technocore v0.13.0 and hosted tclk MCP compatibility evidence
 
 ## Deliberately deferred
 
@@ -166,7 +168,12 @@ acquiring a runtime or dependency during validation; the test fixtures replace
 Technocore network calls with local state.
 
 A read-only live compatibility probe against Technocore v0.11.2 is recorded in
-`evidence/live-compatibility.txt`; no message content is retained.
+`evidence/live-compatibility.txt`. A second probe against v0.13.0 and a pure
+hosted-tclk-MCP handshake are recorded separately; no private room, message
+content, secret, or write was used.
+
+Future chain-validator preparation is deliberately non-operational; see
+[`FLOP validator readiness without deployment`](docs/validator-readiness.md).
 
 ## License and attribution
 
