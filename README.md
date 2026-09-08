@@ -90,6 +90,7 @@ recovery.
 - Deterministic parser property tests for malformed and reordered transcripts
 - Manual, fail-closed upstream golden-vector drift checking
 - Byte-exact, offline Technocore export verification
+- Offline board/deal-room audits with independent capture and generation bindings
 - Privacy-safe Technocore v0.13.0 and hosted tclk MCP compatibility evidence
 
 ## Deliberately deferred
