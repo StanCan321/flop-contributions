@@ -19,6 +19,8 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- updated the reviewed uv bootstrap lock and independent dependency-closure
+  assertion to 0.12.9;
 - aligned the restricted hash-lock validator with compatible upstream
   heartbeat, optional rail-reference, late-lock, and receipt-consistency rules;
   and
