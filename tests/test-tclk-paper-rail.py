@@ -86,24 +86,48 @@ def lifecycle(refund: bool) -> tuple[dict, LocalPaperRail, str]:
               "contract": validator.digest("contract", {"offer": offer, "accept": accept_core})}
     lock = {"type": "lock", "from": payer, "contract": accept["contract"],
             "rail": "paper", "ref": "local-note"}
+    probe = validator.Contract(offer)
+    probe.apply(accept, offer["expiresMs"] - 1)
+    try:
+        probe.apply(lock, offer["refundAfterMs"])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("validator accepted a lock after the refund window opened")
+    probe.apply(lock, offer["refundAfterMs"] - 1)
+    bad_ref = {"type": "reveal", "from": payee, "contract": accept["contract"],
+               "ref": "another-note", "secret": secret}
+    try:
+        probe.apply(bad_ref, offer["refundAfterMs"] - 1)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("validator accepted a mismatched reveal rail reference")
     rail = LocalPaperRail(statement, offer["refundAfterMs"])
-    frames = [offer, accept, lock]
-    keys = [payer_key, payee_key, payer_key]
-    senders = [payer, payee, payer]
-    times = ["2099-12-31T23:50:00Z", "2099-12-31T23:51:00Z", "2099-12-31T23:52:00Z"]
+    heartbeat = {"type": "heartbeat", "from": payee, "contract": accept["contract"],
+                 "nonce": "feedbeef", "note": "still reviewing"}
+    frames = [offer, accept, heartbeat, lock]
+    keys = [payer_key, payee_key, payee_key, payer_key]
+    senders = [payer, payee, payee, payer]
+    times = ["2099-12-31T23:50:00Z", "2099-12-31T23:51:00Z",
+             "2099-12-31T23:51:30Z", "2099-12-31T23:52:00Z"]
 
     if refund:
         rail.refund(offer["refundAfterMs"])
-        terminal = {"type": "refund", "from": payer, "contract": accept["contract"]}
-        receipt = {"type": "receipt", "from": payee, "contract": accept["contract"], "outcome": "refunded"}
+        terminal = {"type": "refund", "from": payer, "contract": accept["contract"],
+                    "ref": "local-note"}
+        receipt = {"type": "receipt", "from": payee, "contract": accept["contract"],
+                   "outcome": "refunded", "rail": "paper", "ref": "local-note"}
         frames += [terminal, receipt]
         keys += [payer_key, payee_key]
         senders += [payer, payee]
         times += ["2100-01-01T00:00:00Z", "2100-01-01T00:00:01Z"]
     else:
         rail.claim(secret, offer["refundAfterMs"] - 1)
-        terminal = {"type": "reveal", "from": payee, "contract": accept["contract"], "secret": secret}
-        receipt = {"type": "receipt", "from": payer, "contract": accept["contract"], "outcome": "claimed"}
+        terminal = {"type": "reveal", "from": payee, "contract": accept["contract"],
+                    "ref": "local-note", "secret": secret}
+        receipt = {"type": "receipt", "from": payer, "contract": accept["contract"],
+                   "outcome": "claimed", "rail": "paper", "ref": "local-note"}
         frames += [terminal, receipt]
         keys += [payee_key, payer_key]
         senders += [payee, payer]
@@ -146,5 +170,6 @@ else:
 print("PASS: zero-value PaperRail claim lifecycle validated")
 print("PASS: zero-value PaperRail refund lifecycle validated")
 print("PASS: PaperRail refused incorrect secret and early refund")
+print("PASS: current heartbeat, rail-reference, and late-lock rules enforced")
 print("PASS: redacted summaries retained no unrevealed secret")
 print("All local PaperRail lifecycle checks passed.")

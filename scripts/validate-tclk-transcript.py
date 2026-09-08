@@ -59,11 +59,11 @@ FRAME_KEYS = {
         {"type", "from", "contract", "rail", "ref"},
     ),
     "reveal": (
-        {"type", "from", "contract", "secret"},
+        {"type", "from", "contract", "secret", "ref"},
         {"type", "from", "contract", "secret"},
     ),
     "refund": (
-        {"type", "from", "contract", "reason"},
+        {"type", "from", "contract", "reason", "ref"},
         {"type", "from", "contract"},
     ),
     "cancel": (
@@ -73,6 +73,10 @@ FRAME_KEYS = {
     "receipt": (
         {"type", "from", "contract", "outcome", "rail", "ref"},
         {"type", "from", "contract", "outcome"},
+    ),
+    "heartbeat": (
+        {"type", "from", "contract", "nonce", "note"},
+        {"type", "from", "contract", "nonce"},
     ),
 }
 
@@ -235,7 +239,14 @@ def validate_frame(frame: object) -> dict:
                 raise ValueError("PTLC pre-signatures are unsupported")
         elif kind == "reveal":
             require_string(frame, "secret", HEX32)
-        elif kind in {"refund", "cancel"} and "reason" in frame:
+            if "ref" in frame:
+                require_string(frame, "ref")
+        elif kind == "refund":
+            if "ref" in frame:
+                require_string(frame, "ref")
+            if "reason" in frame:
+                require_string(frame, "reason")
+        elif kind == "cancel" and "reason" in frame:
             require_string(frame, "reason")
         elif kind == "receipt":
             if frame.get("outcome") not in {"claimed", "refunded", "cancelled"}:
@@ -244,6 +255,10 @@ def validate_frame(frame: object) -> dict:
                 require_string(frame, "rail", RAIL)
             if "ref" in frame:
                 require_string(frame, "ref")
+        elif kind == "heartbeat":
+            require_string(frame, "nonce", NONCE)
+            if "note" in frame:
+                require_string(frame, "note")
     return frame
 
 
@@ -271,6 +286,7 @@ class Contract:
     contract: str | None = None
     statement: str | None = None
     rail: str | None = None
+    rail_ref: str | None = None
 
     def __post_init__(self) -> None:
         if self.offer["role"] == "payer":
@@ -302,12 +318,16 @@ class Contract:
                 raise ValueError("lock is out of turn or names another contract")
             if frame["from"] != self.payer or frame["rail"] not in self.offer["rails"]:
                 raise ValueError("lock has the wrong party or an unoffered rail")
-            self.rail, self.status = frame["rail"], "locked"
+            if now_ms >= self.offer["refundAfterMs"]:
+                raise ValueError("lock appears after the refund window opened")
+            self.rail, self.rail_ref, self.status = frame["rail"], frame["ref"], "locked"
         elif kind == "reveal":
             if self.status != "locked" or frame["contract"] != self.contract:
                 raise ValueError("reveal is out of turn or names another contract")
             if frame["from"] != self.payee or now_ms >= self.offer["refundAfterMs"]:
                 raise ValueError("reveal has the wrong party or is too late")
+            if "ref" in frame and frame["ref"] != self.rail_ref:
+                raise ValueError("reveal names another rail reference")
             opened = "0x" + hashlib.sha256(bytes.fromhex(frame["secret"][2:])).hexdigest()
             if opened != self.statement:
                 raise ValueError("secret does not open the statement")
@@ -317,7 +337,14 @@ class Contract:
                 raise ValueError("refund is out of turn or names another contract")
             if frame["from"] != self.payer or now_ms < self.offer["refundAfterMs"]:
                 raise ValueError("refund has the wrong party or is too early")
+            if "ref" in frame and frame["ref"] != self.rail_ref:
+                raise ValueError("refund names another rail reference")
             self.status = "refunded"
+        elif kind == "heartbeat":
+            if self.status not in {"accepted", "locked"} or frame["contract"] != self.contract:
+                raise ValueError("heartbeat is outside an active contract")
+            if frame["from"] not in {self.payer, self.payee}:
+                raise ValueError("heartbeat is from a non-party")
         elif kind == "cancel":
             if self.status == "proposed":
                 raise ValueError("proposed-state cancel is deferred pending tclk spec clarification")
@@ -333,6 +360,10 @@ class Contract:
                 raise ValueError("receipt names another contract or a non-party")
             if frame["outcome"] != self.status:
                 raise ValueError("receipt outcome contradicts the terminal state")
+            if "rail" in frame and (self.rail is None or frame["rail"] != self.rail):
+                raise ValueError("receipt contradicts the locked rail")
+            if "ref" in frame and (self.rail_ref is None or frame["ref"] != self.rail_ref):
+                raise ValueError("receipt contradicts the locked rail reference")
 
 
 def validate_transcript(payload: object, room: str) -> dict:
