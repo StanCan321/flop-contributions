@@ -39,6 +39,23 @@ chmod 700 "$LOG_DIR"
 touch "$LOG_FILE"
 chmod 600 "$LOG_FILE"
 
+# Explicit diagnostics only: server errors can echo signatures or private text.
+SEND_CAPTURE_FAILURE="${SEND_CAPTURE_FAILURE:-0}"
+if [[ "$SEND_CAPTURE_FAILURE" != 0 && "$SEND_CAPTURE_FAILURE" != 1 ]]; then
+    echo "ERROR: SEND_CAPTURE_FAILURE must be 0 or 1" >&2
+    exit 2
+fi
+if [ "$SEND_CAPTURE_FAILURE" = 1 ]; then
+    FAILURE_DIR="$LOG_DIR/send-failures"
+    if [ -L "$LOG_DIR" ] || [ ! -O "$LOG_DIR" ] || [ -L "$FAILURE_DIR" ]; then
+        echo "ERROR: unsafe private diagnostic directory" >&2
+        exit 1
+    fi
+    mkdir -p "$FAILURE_DIR"
+    [ -O "$FAILURE_DIR" ] || exit 1
+    chmod 700 "$FAILURE_DIR"
+fi
+
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <room> <text>" >&2
     exit 2
@@ -212,6 +229,14 @@ set -e
 unset REQUEST_JSON
 
 if [ "$CURL_RC" -ne 0 ] || [[ ! "$HTTP_CODE" =~ ^2 ]]; then
+
+    if [ "$SEND_CAPTURE_FAILURE" = 1 ]; then
+        FAILURE_FILE="$(mktemp "$FAILURE_DIR/response.XXXXXX")"
+        # Store at most 64 KiB; never print or execute the untrusted response.
+        head -c 65536 "$TMP_RESPONSE" >"$FAILURE_FILE"
+        chmod 600 "$FAILURE_FILE"
+        echo "Private failure response saved (up to 64 KiB); do not publish it." >&2
+    fi
 
     RECORD="$(
         jq -cn \

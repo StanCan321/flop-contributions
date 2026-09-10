@@ -115,7 +115,10 @@ if [ "$IS_POST" = true ]; then
     tee "$MOCK_REQUEST_FILE" >/dev/null
 
     if [ -n "$OUTPUT_FILE" ]; then
-        printf '%s\n' ok >"$OUTPUT_FILE"
+        printf '%s\n' 'PRIVATE_RESPONSE_CANARY' >"$OUTPUT_FILE"
+        if [ "${MOCK_LARGE_RESPONSE:-0}" = 1 ]; then
+            head -c 70000 /dev/zero >>"$OUTPUT_FILE"
+        fi
     fi
 
     printf '%s' "${MOCK_HTTP_CODE:-200}"
@@ -139,6 +142,8 @@ run_sender() {
     MOCK_VERIFY_STATUS="${MOCK_VERIFY_STATUS:-0}" \
     MOCK_HTTP_CODE="${MOCK_HTTP_CODE:-200}" \
     MOCK_CURL_STATUS="${MOCK_CURL_STATUS:-0}" \
+    SEND_CAPTURE_FAILURE="${SEND_CAPTURE_FAILURE:-0}" \
+    MOCK_LARGE_RESPONSE="${MOCK_LARGE_RESPONSE:-0}" \
       "$AGENT_DIR/send.sh" test-room "$1"
 }
 
@@ -233,5 +238,43 @@ unset MOCK_CURL_STATUS MOCK_HTTP_CODE
 [ "$(grep -Fc POST "$CALLS_FILE")" -eq 3 ] || fail "ambiguous timeout retried unexpectedly"
 
 pass "ambiguous timeout reserved once and was not retried"
+
+[ ! -e "$TEST_HOME/flop/send-failures" ] || fail "default retained raw responses"
+SEND_CAPTURE_FAILURE=1
+MOCK_LARGE_RESPONSE=1
+MOCK_HTTP_CODE=400
+set +e
+run_sender 'diagnostic test' >"$TEST_HOME/stdout" 2>"$TEST_HOME/stderr"
+STATUS=$?
+set -e
+unset MOCK_HTTP_CODE
+unset MOCK_LARGE_RESPONSE
+[ "$STATUS" -eq 1 ] || fail "diagnostic failure status changed"
+[ "$(grep -Fc POST "$CALLS_FILE")" -eq 4 ] || fail "diagnostic failure retried"
+FAILURE_DIR="$TEST_HOME/flop/send-failures"
+[ "$(stat -c %a "$FAILURE_DIR")" = 700 ] || fail "diagnostic directory is not private"
+FILES=("$FAILURE_DIR"/response.*)
+[ "${#FILES[@]}" -eq 1 ] || fail "expected one private response"
+[ "$(stat -c %a "${FILES[0]}")" = 600 ] || fail "response is not private"
+grep -Fq PRIVATE_RESPONSE_CANARY "${FILES[0]}" || fail "response not captured"
+[ "$(stat -c %s "${FILES[0]}")" -eq 65536 ] || fail "capture size not bounded"
+if grep -Fq PRIVATE_RESPONSE_CANARY "$TEST_HOME/stdout" "$TEST_HOME/stderr" "$TEST_HOME/flop/activity.jsonl"; then
+    fail "response leaked into public output or activity log"
+fi
+run_sender 'successful diagnostic test' >"$TEST_HOME/stdout" 2>"$TEST_HOME/stderr"
+FILES=("$FAILURE_DIR"/response.*)
+[ "${#FILES[@]}" -eq 1 ] || fail "successful response was retained"
+unset SEND_CAPTURE_FAILURE
+mv "$FAILURE_DIR" "$TEST_HOME/retained-diagnostics"
+ln -s "$TEST_HOME/retained-diagnostics" "$FAILURE_DIR"
+SEND_CAPTURE_FAILURE=1
+set +e
+run_sender 'unsafe directory test' >"$TEST_HOME/stdout" 2>"$TEST_HOME/stderr"
+STATUS=$?
+set -e
+[ "$STATUS" -ne 0 ] || fail "symlink diagnostic directory accepted"
+[ "$(grep -Fc POST "$CALLS_FILE")" -eq 5 ] || fail "unsafe directory reached network"
+unset SEND_CAPTURE_FAILURE
+pass "opt-in failure capture is private, does not retry, and excludes success responses"
 
 echo "All dynamic sender checks passed."
