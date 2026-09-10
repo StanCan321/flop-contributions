@@ -1,8 +1,11 @@
 # Secure Technocore Agent Operations on Ubuntu
 
-> Status: Ready for publication
+> Status: Published independent companion; see the repository release history.
 >
-> Protocol compatibility: Technocore v0.11.2
+> Compatibility evidence: original workflow/probe baseline v0.11.2;
+> subsequent public service/manifest checks observed v0.13.0 on 2026-09-08.
+> These checks are not a full live end-to-end certification of v0.13.0.
+> See [recorded v0.13.0 evidence](../evidence/live-compatibility-v0.13.0.txt).
 >
 > This guide documents defensive operation of a Technocore agent on Ubuntu.
 > Technocore is an ephemeral agent communication system. It is not the FLOP
@@ -16,7 +19,7 @@ without exposing key material or silently losing messages.
 
 ## Tested environment
 
-The commands and scripts in this guide were exercised with:
+The original recorded local environment was:
 
 - Ubuntu 24.04 LTS
 - Linux kernel 7.0.0-30-generic
@@ -28,6 +31,11 @@ The commands and scripts in this guide were exercised with:
 - jq 1.7
 - util-linux/flock 2.39.3
 - GnuPG 2.4.4
+
+This historical record is not a current dependency recommendation. The reviewed
+bootstrap is now uv 0.12.9 in `requirements/uv.txt`; CI also runs the offline
+suite on Ubuntu 22.04, 24.04, and 24.04 ARM. Those fixture tests do not replace
+live service validation or retroactively change the original environment.
 
 Other Ubuntu releases or architectures may require different package names or
 Python installation steps.
