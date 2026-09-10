@@ -4,8 +4,19 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+## 0.4.1 — 2026-09-10
+
 - Added opt-in, size-bounded private signed-send failure-body capture, with
   no retry, no response logging, and symlink-directory refusal tests.
+- Clarified the historical v0.11.2 baseline versus bounded v0.13.0 checks.
+- Recorded successful operator-reported empty-mailbox timer operation and
+  maintenance/acceptance guidance.
+- Reproduced pinned public yellowpaper wire vectors and supplemental codec,
+  hash, and rejection checks without claiming full runtime conformance.
+- Recorded the failed disposable-room creation attempt and its capacity
+  refusal; the live non-empty lifecycle remains unverified.
+- Reviewed tclk source drift and documented remaining rail-alias and string-
+  nonce restrictions. Existing trust constants remain unchanged.
 
 ## 0.4.0 — 2026-09-08
 
