@@ -187,3 +187,10 @@ this command pass.
 On 2026-09-08 it reported upstream commit `5cc4ab9` while the reviewed vector
 content SHA-256 remained unchanged. That is a review-required source drift,
 not permission to advance the pin automatically.
+
+The [2026-09-10 scoped review](../evidence/tclk-drift-review-2026-09-10.md)
+confirmed remaining restrictions: local validation requires integer transport
+nonces and exact rail membership, whereas upstream accepts decimal-string
+nonces and registered rail aliases. Such inputs may be valid upstream but
+rejected locally. The older baseline is deliberately retained; a nonzero drift
+check remains expected. Do not rewrite signed data to force acceptance.
