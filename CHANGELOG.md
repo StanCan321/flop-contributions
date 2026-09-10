@@ -4,6 +4,9 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- Added opt-in, size-bounded private signed-send failure-body capture, with
+  no retry, no response logging, and symlink-directory refusal tests.
+
 ## 0.4.0 — 2026-09-08
 
 ### Added

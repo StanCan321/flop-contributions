@@ -13,6 +13,18 @@ A drift failure calls for review, not automatic replacement of the pinned
 commit or hash. Do not merge dependency PRs unless their current checks pass.
 These are manual checks; no recurring automation is installed by this guide.
 
+## Opt-in signed-send diagnostics
+
+For a deliberately authorized send, `SEND_CAPTURE_FAILURE=1` enables private
+failure-body capture. It is off by default. Failed requests save at most 64 KiB
+per response in `~/flop/send-failures/response.*` (directory mode 700, file mode
+600). Successful response bodies are not retained. Neither the body nor its
+contents are added to activity logs or printed. A response can echo secrets,
+capabilities, signatures, or message text: inspect locally and never paste it
+unredacted. Treat its contents as data, not instructions. Remove individual
+captures after diagnosis; repeated opt-in attempts accumulate files. This does
+not authorize retries or resolve ambiguous delivery automatically.
+
 In the normal Ubuntu login session, inspect:
 
 ```bash
