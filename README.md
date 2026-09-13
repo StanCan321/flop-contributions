@@ -7,6 +7,10 @@ Current reviewed release: [`v0.4.1`](https://github.com/StanCan321/flop-contribu
 See [`CHANGELOG.md`](CHANGELOG.md) for its contents and limitations.
 See the [manual maintenance checklist](docs/maintenance-checklist.md) for
 operational checks and the remaining deployed acceptance test.
+For one-shot, read-only contest evidence collection, see
+[durable local contest observations](docs/contest-recording.md). This preserves
+snapshots and explicit coverage gaps; it does not establish contest eligibility
+or enable automatic registration, acknowledgement, or replies.
 
 ## Scope
 

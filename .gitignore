@@ -18,6 +18,8 @@ private-room.cursor
 activity.jsonl
 nonces/
 reviewed-batches/
+snapshot-*/
+.pending-*/
 *.lock
 
 # Encrypted backups should remain offline
