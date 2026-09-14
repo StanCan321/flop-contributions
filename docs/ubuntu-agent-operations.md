@@ -116,14 +116,20 @@ stat -c '%A %a %n' "$HOME/technocore-agent"
 
 Expected permission: `700`.
 
-Place the reviewed Technocore `sign.py` in that directory and restrict it to
-the current user:
+Install the repository's pinned, reviewed signer (no download or key generation):
 
 ```bash
-chmod 700 "$HOME/technocore-agent/sign.py"
+cd "$HOME/flop-contributions"
+python3 scripts/install-reviewed-signer.py "$HOME/technocore-agent"
 ```
 
-The signing dependency must be pinned in the script's PEP 723 metadata:
+The installer requires an owned mode-700 directory and verifies the vendored
+SHA-256. An identical installed signer is left unchanged; a different signer or
+unsafe file is refused rather than overwritten. Stop and review any refusal.
+Do not delete or regenerate your existing identity to resolve it.
+
+See [signer provenance](../vendor/technocore/README.md) for the exact upstream
+commit, hashes, and the sole modification: this PEP 723 dependency pin:
 
 ```python
 # /// script
@@ -137,6 +143,13 @@ Verify the metadata before executing the signer:
 ```bash
 sed -n '1,5p' "$HOME/technocore-agent/sign.py"
 ```
+
+The fresh-directory regression test installs this exact signer, signs using a
+disposable test-only seed, and verifies the result without a network request.
+This demonstrates a reproducible signer installation, not a full clean-OS
+installation or live-service compatibility certification. Dependency cache
+preparation below is still required. Never follow the signer's historical
+signed-GET examples; use the reviewed POST sender in this guide.
 
 ## Prepare hash-locked Python dependencies
 
