@@ -18,6 +18,7 @@ cd "$ROOT_DIR"
 ./tests/test-trusted-consumer.sh
 ./tests/test-installation-verifier.sh
 ./tests/test-dependency-locks.sh
+./tests/test-technocore-compression-probe.sh
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-signer-install.py
 python3 tests/test-fetch-mailbox.py
