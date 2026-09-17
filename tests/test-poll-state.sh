@@ -288,6 +288,64 @@ pass "mailbox generation change stopped cursor advancement"
 
 SIGNATURE="$(printf 'A%.0s' {1..86})"
 
+# Technocore's tail-window semantics can return the newest page rather than the
+# first page after a stale cursor. Detect that discontinuity and fail closed.
+jq -n \
+  --arg signature "$SIGNATURE" '{
+    room: "test-mailbox",
+    count: 1,
+    first_seq: 10,
+    last_seq: 10,
+    generation: 2,
+    messages: [
+        {
+            seq: 10,
+            from: "did:key:z6Mktest",
+            ts: "2026-09-01T00:00:00.000000Z",
+            text: "newest retained fixture",
+            nonce: 125,
+            sig: $signature
+        }
+    ]
+}' >"$MOCK_RESPONSE"
+
+set +e
+
+HOME="$TEST_HOME" \
+PATH="$MOCK_BIN:$PATH" \
+MOCK_RESPONSE="$MOCK_RESPONSE" \
+  "$POLL_SCRIPT" \
+  >"$TEST_HOME/stdout" \
+  2>"$TEST_HOME/stderr"
+
+STATUS=$?
+
+set -e
+
+[ "$STATUS" -eq 3 ] ||
+    fail "tail-window history gap returned unexpected status $STATUS"
+
+jq -e '
+    .status == "history_gap"
+    and .starting_cursor == 7
+    and .first_available_seq == 10
+    and .missing_seq.from == 8
+    and .missing_seq.to == 9
+    and .cursor_updated == false
+' "$TEST_HOME/stdout" >/dev/null ||
+    fail "tail-window history gap was not reported precisely"
+
+jq -e '
+    .generation == 2
+    and .cursor == 7
+' "$TEST_HOME/flop/mailbox.cursor" >/dev/null ||
+    fail "tail-window history gap changed cursor state"
+
+[ ! -e "$TEST_HOME/flop/mailbox.pending" ] ||
+    fail "tail-window history gap created a pending acknowledgement"
+
+pass "tail-window history gap stopped cursor advancement"
+
 jq -n \
   --arg signature "$SIGNATURE" '{
     room: "test-mailbox",

@@ -30,6 +30,8 @@ uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-tclk-parser-properties.py
 ./tests/test-tclk-upstream-drift.sh
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
+  tests/test-contest-recorder.py
+uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-technocore-export.py
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-tclk-paper-rail.py

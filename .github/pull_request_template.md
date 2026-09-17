@@ -1,6 +1,10 @@
-## Summary
+## What
 
 <!-- Describe the narrowly scoped change and why it is needed. -->
+
+## Why
+
+<!-- Explain the problem, evidence, and why this scope is appropriate. -->
 
 ## Safety boundary
 
@@ -10,7 +14,7 @@ mailbox state, acknowledgement, logging, or message review. State explicitly
 when the existing boundary is unchanged.
 -->
 
-## Validation
+## Checks
 
 <!-- List the exact local checks performed and their results. -->
 

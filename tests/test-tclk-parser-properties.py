@@ -143,6 +143,17 @@ for timestamp in ("not-a-time", "2026-01-01T00:00:00", "999999-01-01T00:00:00Z")
     candidate["messages"][0] = signed_message(1, frame, key, timestamp)
     cases.append((f"invalid timestamp {timestamp}", canonical(candidate)))
 
+# Decimal-string transport nonces are an intentional compatibility restriction.
+# Sign the exact representation so rejection is not caused by a bad signature.
+for nonce in ("1001", "0001001", "+1001", "1e3", "9" * 20):
+    candidate = signed_batch()
+    message = candidate["messages"][0]
+    message["nonce"] = nonce
+    message["sig"] = base64.urlsafe_b64encode(PAYER_KEY.sign(
+        f"{ROOM}|{nonce}|{message['text']}".encode()
+    )).decode().rstrip("=")
+    cases.append((f"unsupported string transport nonce {nonce}", canonical(candidate)))
+
 for label, frame_mutation in (
     ("Unicode edge", lambda frame: frame.update(asset="TE\u200bST")),
     ("unknown frame field", lambda frame: frame.update(extra="x")),

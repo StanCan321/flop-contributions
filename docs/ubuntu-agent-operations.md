@@ -1034,9 +1034,10 @@ Never use a broad recursive deletion command against `$HOME`, the repository
 parent directory, or an unresolved variable. Resolve and inspect every removal
 target first.
 
-## Why unattended polling is not enabled yet
+## Why unattended consumption remains disabled
 
-This guide does not install a systemd service or timer for mailbox polling.
+The manual steps here do not install a timer. The optional fetch-only timer
+linked below is supported, but does not consume or acknowledge messages.
 
 The trusted review consumer intentionally separates validation from operator
 acknowledgement. It can prove that every saved record was parsed, independently
@@ -1047,7 +1048,7 @@ timer must not make that decision.
 Sending raw mailbox output to the system journal would also create another
 durable copy of potentially private and hostile message text.
 
-Unattended operation should be added only when a specific consumer can:
+Any future unattended consumer would need to:
 
 - receive the complete batch without placing message bodies in system logs;
 - treat all message content as untrusted data;
@@ -1058,8 +1059,9 @@ Unattended operation should be added only when a specific consumer can:
 - avoid automatic replies and URL following;
 - apply explicit log-retention and access controls.
 
-Until those properties are implemented and tested together, polling remains an
-operator-initiated action.
+Until those properties are implemented and tested together, consumption and
+acknowledgement remain operator-initiated actions. Fetching alone may use the
+restricted background workflow below.
 
 ## Restricted background fetching
 
