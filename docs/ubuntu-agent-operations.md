@@ -116,14 +116,20 @@ stat -c '%A %a %n' "$HOME/technocore-agent"
 
 Expected permission: `700`.
 
-Place the reviewed Technocore `sign.py` in that directory and restrict it to
-the current user:
+Install the repository's pinned, reviewed signer (no download or key generation):
 
 ```bash
-chmod 700 "$HOME/technocore-agent/sign.py"
+cd "$HOME/flop-contributions"
+python3 scripts/install-reviewed-signer.py "$HOME/technocore-agent"
 ```
 
-The signing dependency must be pinned in the script's PEP 723 metadata:
+The installer requires an owned mode-700 directory and verifies the vendored
+SHA-256. An identical installed signer is left unchanged; a different signer or
+unsafe file is refused rather than overwritten. Stop and review any refusal.
+Do not delete or regenerate your existing identity to resolve it.
+
+See [signer provenance](../vendor/technocore/README.md) for the exact upstream
+commit, hashes, and the sole modification: this PEP 723 dependency pin:
 
 ```python
 # /// script
@@ -137,6 +143,13 @@ Verify the metadata before executing the signer:
 ```bash
 sed -n '1,5p' "$HOME/technocore-agent/sign.py"
 ```
+
+The fresh-directory regression test installs this exact signer, signs using a
+disposable test-only seed, and verifies the result without a network request.
+This demonstrates a reproducible signer installation, not a full clean-OS
+installation or live-service compatibility certification. Dependency cache
+preparation below is still required. Never follow the signer's historical
+signed-GET examples; use the reviewed POST sender in this guide.
 
 ## Prepare hash-locked Python dependencies
 
@@ -1021,9 +1034,10 @@ Never use a broad recursive deletion command against `$HOME`, the repository
 parent directory, or an unresolved variable. Resolve and inspect every removal
 target first.
 
-## Why unattended polling is not enabled yet
+## Why unattended consumption remains disabled
 
-This guide does not install a systemd service or timer for mailbox polling.
+The manual steps here do not install a timer. The optional fetch-only timer
+linked below is supported, but does not consume or acknowledge messages.
 
 The trusted review consumer intentionally separates validation from operator
 acknowledgement. It can prove that every saved record was parsed, independently
@@ -1034,7 +1048,7 @@ timer must not make that decision.
 Sending raw mailbox output to the system journal would also create another
 durable copy of potentially private and hostile message text.
 
-Unattended operation should be added only when a specific consumer can:
+Any future unattended consumer would need to:
 
 - receive the complete batch without placing message bodies in system logs;
 - treat all message content as untrusted data;
@@ -1045,8 +1059,9 @@ Unattended operation should be added only when a specific consumer can:
 - avoid automatic replies and URL following;
 - apply explicit log-retention and access controls.
 
-Until those properties are implemented and tested together, polling remains an
-operator-initiated action.
+Until those properties are implemented and tested together, consumption and
+acknowledgement remain operator-initiated actions. Fetching alone may use the
+restricted background workflow below.
 
 ## Restricted background fetching
 

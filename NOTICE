@@ -10,6 +10,12 @@ Copyright their respective contributors.
 Source: https://github.com/flop-labs/technocore-chat
 License: Apache License 2.0
 
+vendor/technocore/sign.py is derived from scripts/sign.py at upstream commit
+1de76f7e1919ae50714a87df3ad8a5dc590ef60a.
+Modified by StanCan321 to pin cryptography==50.0.1 in PEP 723 metadata;
+signing and key-derivation logic are unchanged. See vendor/technocore/README.md
+for original and modified SHA-256 hashes.
+
 The scripts and documentation in this repository are provided under the
 Apache License 2.0.
 

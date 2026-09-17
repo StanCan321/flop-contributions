@@ -19,6 +19,8 @@ cd "$ROOT_DIR"
 ./tests/test-installation-verifier.sh
 ./tests/test-dependency-locks.sh
 ./tests/test-technocore-compression-probe.sh
+uv run --python 3.12 --with-requirements requirements/verifier.txt \
+  tests/test-signer-install.py
 python3 tests/test-fetch-mailbox.py
 systemd-analyze verify systemd/technocore-fetch.service systemd/technocore-fetch.timer
 ./tests/test-tclk-transcript.sh
