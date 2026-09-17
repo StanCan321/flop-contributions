@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import base64
+import copy
 import hashlib
 import importlib.util
 import sys
@@ -88,6 +89,17 @@ def lifecycle(refund: bool) -> tuple[dict, LocalPaperRail, str]:
             "rail": "paper", "ref": "local-note"}
     probe = validator.Contract(offer)
     probe.apply(accept, offer["expiresMs"] - 1)
+    # Exact membership remains deliberate: do not normalize signed offer bytes.
+    for alias in ("paperrail", "Paper", "unknown"):
+        alias_probe = copy.deepcopy(probe)
+        before = copy.deepcopy(vars(alias_probe))
+        try:
+            alias_probe.apply({**lock, "rail": alias}, offer["refundAfterMs"] - 1)
+        except ValueError as error:
+            assert "unoffered rail" in str(error)
+        else:
+            raise AssertionError("validator accepted an unoffered rail alias")
+        assert vars(alias_probe) == before, "rejected alias changed contract state"
     try:
         probe.apply(lock, offer["refundAfterMs"])
     except ValueError:

@@ -61,6 +61,9 @@ Resolve review conversations and update the branch if GitHub reports that it
 is behind `main`. Merge only after all required checks pass. The repository
 accepts squash merges only and automatically deletes merged topic branches.
 
+Use the template's **What**, **Why**, and **Checks** headings, retaining the
+additional safety-boundary and external-activity disclosures.
+
 Pull requests should state:
 
 - what changed and why;
