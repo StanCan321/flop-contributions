@@ -72,6 +72,14 @@ done
 
 if [[ "$url" == */config ]]; then
     printf '{"version":"%s"}\n' "${MOCK_VERSION:-0.14.0}" >"$output"
+elif [[ "$url" == *'?format=json&limit=1' ]]; then
+    printf '{"last_seq":6}\n' >"$output"
+elif [[ "$url" == */export ]]; then
+    if [ "${MOCK_TRUNCATED:-}" = 1 ]; then
+        printf '{"seq":5}\n' >"$output"
+    else
+        printf '{"seq":6}\n' >"$output"
+    fi
 elif [ "${MOCK_CORRUPT:-}" = "$encoding" ]; then
     printf 'altered decoded bytes\n' >"$output"
 else
@@ -88,6 +96,9 @@ grep -Fq '"resource": "docs"' "$TEST_DIR/output" ||
     fail "documentation compression was not checked"
 grep -Fq '"resource": "export"' "$TEST_DIR/output" ||
     fail "export compression was not checked"
+grep -Fq 'Export completeness: each decoded snapshot reaches pre-export last_seq 6.' \
+    "$TEST_DIR/output" ||
+    fail "export completeness was not checked"
 
 set +e
 PATH="$TEST_DIR/bin:$PATH" MOCK_VERSION=0.13.0 \
@@ -109,8 +120,19 @@ set -e
 grep -Fq 'Brotli decoded bytes differ from identity' "$TEST_DIR/corrupt.err" ||
     fail "decoded-byte drift was not explained"
 
+set +e
+PATH="$TEST_DIR/bin:$PATH" MOCK_TRUNCATED=1 \
+    "$PROBE" 0.14.0 public-room >"$TEST_DIR/truncated.out" 2>"$TEST_DIR/truncated.err"
+status=$?
+set -e
+
+[ "$status" -eq 1 ] || fail "truncated export was not refused"
+grep -Fq 'export identity ends at seq 5 before pre-export head 6' \
+    "$TEST_DIR/truncated.err" ||
+    fail "truncated export was not explained"
+
 if rg -n 'curl.+-X|--request|--data|/say|/set|/ack' "$PROBE"; then
     fail "probe contains a write-capable curl pattern"
 fi
 
-echo "PASS: v0.14 compression probe is version-gated, byte-exact and read-only"
+echo "PASS: v0.14 compression probe is version-gated, complete, byte-exact and read-only"

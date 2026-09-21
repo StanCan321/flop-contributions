@@ -182,8 +182,11 @@ content, secret, or write was used.
 The manual `scripts/probe-technocore-compression.sh` check is prepared for
 Technocore v0.14.0. It stops if the deployed service reports another version,
 compares decoded identity/gzip/Brotli bytes, deletes all response bodies on
-exit, and optionally checks a reviewed public-room export. Do not record v0.14
-evidence until the live `/config` reports v0.14.0.
+exit, and optionally checks a reviewed public-room export. Before downloading
+an export it reads the room's `last_seq`; every decoded JSONL snapshot must end
+with a newline, have strictly increasing safe sequence numbers, and reach that
+pre-export head. Do not record v0.14 evidence until the live `/config` reports
+v0.14.0.
 
 Future chain-validator preparation is deliberately non-operational; see
 [`FLOP validator readiness without deployment`](docs/validator-readiness.md).

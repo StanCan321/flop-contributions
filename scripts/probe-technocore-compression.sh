@@ -109,6 +109,95 @@ probe_resource() {
         '{resource: $resource, decoded_sha256: $sha256, decoded_bytes: $bytes}'
 }
 
+read_last_seq() {
+    local response="$1"
+
+    jq -er '
+        .last_seq
+        | select(type == "number")
+        | select(floor == .)
+        | select(. >= 0 and . <= 9007199254740991)
+    ' "$response"
+}
+
+validate_export_snapshot() {
+    local encoding="$1"
+    local body="$2"
+    local pre_export_last_seq="$3"
+    local exported_last_seq
+
+    if ! exported_last_seq="$(python3 - "$body" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+data = path.read_bytes()
+
+if not data:
+    raise SystemExit("export body is empty")
+if not data.endswith(b"\n"):
+    raise SystemExit("export body does not end with a newline")
+
+def reject_duplicates(pairs):
+    value = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON key {key!r}")
+        value[key] = item
+    return value
+
+last_seq = -1
+for line_number, line in enumerate(data.splitlines(), start=1):
+    if not line:
+        raise SystemExit(f"empty JSONL line at {line_number}")
+    try:
+        record = json.loads(line, object_pairs_hook=reject_duplicates)
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+        raise SystemExit(f"invalid JSONL at line {line_number}: {exc}") from exc
+    if not isinstance(record, dict):
+        raise SystemExit(f"JSONL line {line_number} is not an object")
+    seq = record.get("seq")
+    if isinstance(seq, bool) or not isinstance(seq, int):
+        raise SystemExit(f"JSONL line {line_number} has an invalid seq")
+    if seq < 0 or seq > 9007199254740991:
+        raise SystemExit(f"JSONL line {line_number} has an unsafe seq")
+    if seq <= last_seq:
+        raise SystemExit(f"JSONL seq is not strictly increasing at line {line_number}")
+    last_seq = seq
+
+print(last_seq)
+PY
+)"; then
+        fail "export $encoding response is not a complete JSONL snapshot"
+    fi
+
+    [ "$exported_last_seq" -ge "$pre_export_last_seq" ] ||
+        fail "export $encoding ends at seq $exported_last_seq before pre-export head $pre_export_last_seq"
+}
+
+probe_export() {
+    local room="$1"
+    local room_url="$BASE_URL/r/$room"
+    local pre_export_last_seq
+
+    fetch identity "$room_url?format=json&limit=1" export.head
+    pre_export_last_seq="$(read_last_seq "$PROBE_DIR/export.head.body")" ||
+        fail "room head did not contain a safe last_seq"
+
+    probe_resource export "$room_url/export"
+
+    for encoding in identity gzip br; do
+        validate_export_snapshot \
+            "$encoding" \
+            "$PROBE_DIR/export.$encoding.body" \
+            "$pre_export_last_seq"
+    done
+
+    printf 'Export completeness: each decoded snapshot reaches pre-export last_seq %s.\n' \
+        "$pre_export_last_seq"
+}
+
 if [ -n "$PUBLIC_ROOM" ] && [[ ! "$PUBLIC_ROOM" =~ ^[a-z0-9][a-z0-9_-]{0,47}$ ]]; then
     fail "public room must match the Technocore room-name grammar"
 fi
@@ -119,7 +208,7 @@ echo "Read-only requests only; response bodies are deleted on exit."
 probe_resource docs "$BASE_URL/llms.txt"
 
 if [ -n "$PUBLIC_ROOM" ]; then
-    probe_resource export "$BASE_URL/r/$PUBLIC_ROOM/export"
+    probe_export "$PUBLIC_ROOM"
 else
     echo "Export check skipped: pass a reviewed public room as argument 2."
 fi
