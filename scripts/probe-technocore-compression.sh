@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-EXPECTED_VERSION="${1:-0.14.0}"
+EXPECTED_VERSION="${1:-0.14.5}"
 PUBLIC_ROOM="${2:-}"
 BASE_URL="https://technocore.chat"
 MAX_BYTES=33554432

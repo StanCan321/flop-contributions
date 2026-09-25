@@ -71,7 +71,7 @@ done
 } >"$headers"
 
 if [[ "$url" == */config ]]; then
-    printf '{"version":"%s"}\n' "${MOCK_VERSION:-0.14.0}" >"$output"
+    printf '{"version":"%s"}\n' "${MOCK_VERSION:-0.14.5}" >"$output"
 elif [[ "$url" == *'?format=json&limit=1' ]]; then
     printf '{"last_seq":6}\n' >"$output"
 elif [[ "$url" == */export ]]; then
@@ -89,8 +89,8 @@ MOCK
 
 chmod 700 "$TEST_DIR/bin/curl"
 
-PATH="$TEST_DIR/bin:$PATH" "$PROBE" 0.14.0 public-room >"$TEST_DIR/output"
-grep -Fq 'Service version: 0.14.0' "$TEST_DIR/output" ||
+PATH="$TEST_DIR/bin:$PATH" "$PROBE" 0.14.5 public-room >"$TEST_DIR/output"
+grep -Fq 'Service version: 0.14.5' "$TEST_DIR/output" ||
     fail "matching service version was not reported"
 grep -Fq '"resource": "docs"' "$TEST_DIR/output" ||
     fail "documentation compression was not checked"
@@ -102,17 +102,17 @@ grep -Fq 'Export completeness: each decoded snapshot reaches pre-export last_seq
 
 set +e
 PATH="$TEST_DIR/bin:$PATH" MOCK_VERSION=0.13.0 \
-    "$PROBE" 0.14.0 >"$TEST_DIR/mismatch.out" 2>"$TEST_DIR/mismatch.err"
+    "$PROBE" 0.14.5 >"$TEST_DIR/mismatch.out" 2>"$TEST_DIR/mismatch.err"
 status=$?
 set -e
 
 [ "$status" -eq 3 ] || fail "wrong service version did not stop with status 3"
-grep -Fq 'expected Technocore 0.14.0, observed 0.13.0' "$TEST_DIR/mismatch.err" ||
+grep -Fq 'expected Technocore 0.14.5, observed 0.13.0' "$TEST_DIR/mismatch.err" ||
     fail "wrong service version was not explained"
 
 set +e
 PATH="$TEST_DIR/bin:$PATH" MOCK_CORRUPT=br \
-    "$PROBE" 0.14.0 >"$TEST_DIR/corrupt.out" 2>"$TEST_DIR/corrupt.err"
+    "$PROBE" 0.14.5 >"$TEST_DIR/corrupt.out" 2>"$TEST_DIR/corrupt.err"
 status=$?
 set -e
 
@@ -122,7 +122,7 @@ grep -Fq 'Brotli decoded bytes differ from identity' "$TEST_DIR/corrupt.err" ||
 
 set +e
 PATH="$TEST_DIR/bin:$PATH" MOCK_TRUNCATED=1 \
-    "$PROBE" 0.14.0 public-room >"$TEST_DIR/truncated.out" 2>"$TEST_DIR/truncated.err"
+    "$PROBE" 0.14.5 public-room >"$TEST_DIR/truncated.out" 2>"$TEST_DIR/truncated.err"
 status=$?
 set -e
 

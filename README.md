@@ -179,14 +179,17 @@ A read-only live compatibility probe against Technocore v0.11.2 is recorded in
 hosted-tclk-MCP handshake are recorded separately; no private room, message
 content, secret, or write was used.
 
-The manual `scripts/probe-technocore-compression.sh` check is prepared for
-Technocore v0.14.0. It stops if the deployed service reports another version,
+The manual `scripts/probe-technocore-compression.sh` check was activated after
+the live service reported Technocore v0.14.5. It stops if the deployed service
+reports another version,
 compares decoded identity/gzip/Brotli bytes, deletes all response bodies on
 exit, and optionally checks a reviewed public-room export. Before downloading
 an export it reads the room's `last_seq`; every decoded JSONL snapshot must end
 with a newline, have strictly increasing safe sequence numbers, and reach that
-pre-export head. Do not record v0.14 evidence until the live `/config` reports
-v0.14.0.
+pre-export head. The bounded public-document check passed on 2026-09-25; its
+non-secret result is recorded in `evidence/live-compression-v0.14.5.txt`. The
+optional public-room export check was not run because no reviewed public room
+was supplied.
 
 Future chain-validator preparation is deliberately non-operational; see
 [`FLOP validator readiness without deployment`](docs/validator-readiness.md).
