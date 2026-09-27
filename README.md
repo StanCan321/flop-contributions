@@ -96,6 +96,8 @@ recovery.
 - Deterministic parser property tests for malformed and reordered transcripts
 - Manual, fail-closed upstream golden-vector drift checking
 - Byte-exact, offline Technocore export verification
+- Offline Close Call package, launch-seed, signature, sweep-continuity, and
+  cross-room commitment verification
 - Offline board/deal-room audits with independent capture and generation bindings
 - Privacy-safe Technocore v0.13.0 and hosted tclk MCP compatibility evidence
 
@@ -138,6 +140,11 @@ A separate manual checker fetches upstream state and reports drift without
 rewriting reviewed constants.
 A zero-value local PaperRail rehearsal covers both claim and refund lifecycles
 without contacting Technocore or a value-bearing settlement rail.
+
+For the Close Call verifier's exact inputs, checks, and explicit limits, read
+[`Offline Close Call verification`](docs/close-call-verification.md). It does
+not register, trade, execute the contest fold, or infer omitted participant
+records.
 
 For the validator's hash-only scope and manual invocation, read
 [`Read-only tclk/1 transcript validation`](docs/tclk-read-only-validation.md).
