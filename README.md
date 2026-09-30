@@ -146,6 +146,11 @@ For the Close Call verifier's exact inputs, checks, and explicit limits, read
 not register, trade, execute the contest fold, or infer omitted participant
 records.
 
+For offline checking of organizer-published sweep records against captured
+signed commitments, and exact hypothetical single-position fee/scenario math,
+read [`Close Call archive verification and position modeling`](docs/close-call-archive-and-strategy.md).
+Neither tool downloads, signs, negotiates, or posts a trade.
+
 For the validator's hash-only scope and manual invocation, read
 [`Read-only tclk/1 transcript validation`](docs/tclk-read-only-validation.md).
 

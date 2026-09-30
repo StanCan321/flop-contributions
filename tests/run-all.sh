@@ -36,6 +36,8 @@ uv run --python 3.12 --with-requirements requirements/verifier.txt \
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-close-call-verifier.py
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
+  tests/test-close-call-archive-tools.py
+uv run --python 3.12 --with-requirements requirements/verifier.txt \
   tests/test-tclk-paper-rail.py
 
 uv run --python 3.12 --with-requirements requirements/verifier.txt \
